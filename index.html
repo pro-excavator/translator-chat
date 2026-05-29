@@ -2,526 +2,636 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>实时翻译聊天室</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>双语翻译客服系统</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
-        .chat-container {
+        
+        .container {
+            max-width: 550px;
             width: 100%;
-            max-width: 1200px;
-            height: 90vh;
-            background-color: #f8fafc;
-            border-radius: 32px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        }
-        .chat-header {
+            margin: 0 auto;
             background: white;
-            padding: 16px 24px;
-            border-bottom: 1px solid #e2e8f0;
+            border-radius: 48px;
+            padding: 32px 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        /* 视图切换 */
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        /* 一键粘贴区域 - 最显眼 */
+        .paste-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border: 2px dashed #667eea;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .paste-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .paste-input {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            outline: none;
+            resize: vertical;
+            background: white;
+            margin-bottom: 12px;
+        }
+        .paste-input:focus { border-color: #667eea; }
+        .paste-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .paste-help {
+            font-size: 0.65rem;
+            color: #667eea;
+            text-align: center;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+        
+        /* 配置状态 */
+        .config-status {
+            background: #f0f0f0;
+            padding: 12px 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 8px;
         }
-        .title h1 { 
-            font-size: 1.2rem;
-            color: #0f172a;
-        }
-        .title p {
-            font-size: 0.65rem;
-            color: #64748b;
-        }
-        .status-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .room-status {
+        .status-badge {
             font-size: 0.75rem;
             padding: 4px 12px;
             border-radius: 20px;
-            font-weight: 600;
         }
-        .status-open { 
-            background: #dcfce7; 
-            color: #166534; 
+        .status-connected { background: #d1fae5; color: #065f46; }
+        .status-disconnected { background: #fee2e2; color: #991b1b; }
+        
+        /* 折叠配置区域 */
+        .detail-config {
+            margin-top: 16px;
+            border-top: 1px solid #e5e5e5;
+            padding-top: 16px;
         }
-        .status-closed { 
-            background: #fee2e2; 
-            color: #991b1b; 
+        .detail-toggle {
+            color: #667eea;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 12px;
         }
-        .messages-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f1f5f9;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
         }
-        .message {
-            display: flex;
-            animation: fadeIn 0.2s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .message.sent { 
-            justify-content: flex-end; 
-        }
-        .message.received { 
-            justify-content: flex-start; 
-        }
-        .bubble {
-            max-width: 70%;
-            padding: 12px 18px;
-            border-radius: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .sent .bubble { 
-            background: #3b82f6; 
-            color: white;
-            border-bottom-right-radius: 6px;
-        }
-        .received .bubble { 
-            background: white; 
-            color: #1e293b; 
-            border: 1px solid #e2e8f0;
-            border-bottom-left-radius: 6px;
-        }
-        .sender-name {
-            font-size: 0.65rem;
+        .config-input label {
+            font-size: 0.7rem;
+            color: #666;
+            display: block;
             margin-bottom: 4px;
-            opacity: 0.85;
-            font-weight: 600;
         }
-        .sent .sender-name {
-            text-align: right;
-            color: #dbeafe;
-        }
-        .message-text {
-            font-size: 0.95rem;
-            word-wrap: break-word;
-        }
-        .translation-note {
-            font-size: 0.65rem;
-            margin-top: 6px;
-            padding-top: 4px;
-            border-top: 1px dashed rgba(255,255,255,0.3);
-            opacity: 0.8;
-        }
-        .received .translation-note {
-            border-top-color: #cbd5e1;
-            color: #475569;
-        }
-        .timestamp {
-            font-size: 0.6rem;
-            opacity: 0.6;
-            margin-top: 4px;
-        }
-        .input-area {
-            background: white;
-            padding: 16px 20px 20px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .text-input-wrapper {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-        #messageInput {
-            flex: 1;
-            padding: 12px 18px;
-            border: 1px solid #cbd5e0;
-            border-radius: 28px;
+        .config-input input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            font-size: 0.8rem;
             outline: none;
-            font-size: 0.95rem;
-            font-family: inherit;
-            resize: none;
-            max-height: 80px;
+            background: #f9f9f9;
         }
-        #messageInput:focus {
-            border-color: #3b82f6;
-        }
-        #sendBtn {
-            background: #10b981;
+        .config-input input:focus { border-color: #667eea; background: white; }
+        
+        .btn {
+            padding: 12px 20px;
             border: none;
-            padding: 12px 24px;
-            border-radius: 28px;
-            color: white;
-            cursor: pointer;
+            border-radius: 30px;
             font-weight: 600;
-            font-size: 0.95rem;
-        }
-        #sendBtn:hover:not(:disabled) {
-            background: #059669;
-        }
-        #sendBtn:disabled { 
-            background: #94a3b8; 
-            cursor: not-allowed; 
-            opacity: 0.6;
-        }
-        .voice-controls { 
-            display: flex; 
-            gap: 12px; 
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .mic-button {
-            background: #3b82f6;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 28px;
-            color: white;
             cursor: pointer;
-            font-weight: 600;
             font-size: 0.9rem;
         }
-        .mic-button:hover:not(:disabled) {
-            background: #2563eb;
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-block { width: 100%; }
+        
+        .input-group { margin-bottom: 16px; }
+        .input-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #e0e0e0;
+            border-radius: 30px;
+            font-size: 1rem;
+            outline: none;
+            text-align: center;
         }
-        .mic-button:disabled { 
-            background: #94a3b8;
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .mic-button.recording { 
-            background: #ef4444; 
-            animation: pulse 1s infinite; 
-        }
-        @keyframes pulse { 
-            0% { transform: scale(1); } 
-            50% { transform: scale(1.05); } 
-            100% { transform: scale(1); } 
-        }
-        .status-badge {
-            font-size: 0.7rem;
-            color: #475569;
-            background: #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 24px;
-        }
-        @media (max-width: 640px) { 
-            .bubble { max-width: 95%; }
-            .chat-header { padding: 12px 16px; }
-            .title h1 { font-size: 1rem; }
-        }
+        .input-group input:focus { border-color: #667eea; }
+        
+        .message-area { margin-top: 16px; }
+        .error-msg { color: #ef4444; font-size: 0.75rem; text-align: center; padding: 8px; background: #fee2e2; border-radius: 20px; }
+        .success-msg { color: #10b981; font-size: 0.75rem; text-align: center; padding: 8px; background: #d1fae5; border-radius: 20px; }
+        
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo-icon { width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 25px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; }
+        h1 { font-size: 1.6rem; text-align: center; margin-bottom: 8px; color: #1e293b; }
+        .subtitle { text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 24px; }
+        .divider { text-align: center; margin: 20px 0; position: relative; }
+        .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e2e8f0; }
+        .divider span { background: white; padding: 0 12px; position: relative; color: #94a3b8; font-size: 0.75rem; }
+        .footer-note { text-align: center; font-size: 0.7rem; color: #94a3b8; margin-top: 20px; }
+        
+        /* 管理后台样式 */
+        .admin-header { background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 24px; color: white; margin-bottom: 20px; }
+        .stats { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card { background: white; padding: 16px; border-radius: 20px; flex: 1; text-align: center; }
+        .stat-number { font-size: 1.6rem; font-weight: bold; color: #667eea; }
+        .rooms-grid { display: grid; gap: 16px; max-height: 400px; overflow-y: auto; }
+        .room-card { background: white; border-radius: 20px; padding: 16px; border: 1px solid #e5e5e5; }
+        .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+        .client-name { font-size: 1rem; font-weight: bold; }
+        .toggle-switch { width: 50px; height: 26px; background: #ccc; border-radius: 30px; position: relative; cursor: pointer; }
+        .toggle-switch.active { background: #34c759; }
+        .toggle-switch::after { content: ''; width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: 0.2s; }
+        .toggle-switch.active::after { left: 25px; }
+        .room-link { background: #f5f5f5; padding: 8px; border-radius: 12px; font-size: 0.65rem; word-break: break-all; margin: 10px 0; }
+        .room-actions { display: flex; gap: 8px; }
+        .room-actions button { flex: 1; padding: 8px; border-radius: 20px; font-size: 0.7rem; cursor: pointer; border: none; }
+        .copy-room-btn { background: #667eea; color: white; }
+        .delete-room-btn { background: #ef4444; color: white; }
+        .back-btn { margin-bottom: 16px; background: #e5e7eb; border: none; padding: 8px 16px; border-radius: 30px; cursor: pointer; }
+        .add-client-area { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .add-client-area input { flex: 1; padding: 12px 16px; border: 1px solid #ddd; border-radius: 30px; outline: none; }
     </style>
 </head>
 <body>
-<div class="chat-container">
-    <div class="chat-header">
-        <div class="title">
-            <h1>🌐 双语翻译 · 客服咨询</h1>
-            <p>中文 ↔ 西班牙语 实时互译</p>
+<div class="container">
+    <!-- 视图1：主入口 -->
+    <div id="mainView" class="view active">
+        <div class="logo">
+            <div class="logo-icon">🌐</div>
         </div>
-        <div class="status-area">
-            <span id="roomStatus" class="room-status status-closed">⏳ 连接中...</span>
+        <h1>双语翻译客服</h1>
+        <div class="subtitle">中文 ↔ 西班牙语 实时互译 · 语音对话</div>
+        
+        <!-- 🔥 一键粘贴区域 - 最显眼的位置 -->
+        <div class="paste-card">
+            <div class="paste-title">
+                📋 一键配置 Firebase
+            </div>
+            <textarea id="pasteConfig" class="paste-input" rows="4" placeholder='从 Firebase 控制台复制整个配置，例如：
+
+{
+  apiKey: "AIzaSyD...",
+  authDomain: "xxx.firebaseapp.com",
+  projectId: "xxx",
+  storageBucket: "xxx.appspot.com",
+  messagingSenderId: "123456",
+  appId: "1:123:web:abc"
+}'></textarea>
+            <button class="paste-btn" onclick="parseAndFillConfig()">✨ 一键解析并配置</button>
+            <div class="paste-help" onclick="showHelp()">📖 不知道如何获取？点击查看步骤</div>
         </div>
-    </div>
-    
-    <div class="messages-area" id="messagesArea">
-        <div class="message received">
-            <div class="bubble">
-                <div class="sender-name">🔒 系统</div>
-                <div class="message-text">⏳ 正在连接...</div>
+        
+        <!-- 配置状态显示 -->
+        <div class="config-status">
+            <span>🔥 Firebase 状态</span>
+            <span id="configStatus" class="status-badge status-disconnected">未配置</span>
+        </div>
+        
+        <!-- 详细配置（可折叠，一般用不到） -->
+        <div class="detail-config">
+            <div class="detail-toggle" onclick="toggleDetail()">▼ 手动填写配置（高级）</div>
+            <div id="detailPanel" style="display: none;">
+                <div class="config-grid">
+                    <div class="config-input"><label>apiKey</label><input type="text" id="apiKey" placeholder="AIzaSyD..."></div>
+                    <div class="config-input"><label>authDomain</label><input type="text" id="authDomain" placeholder="项目名.firebaseapp.com"></div>
+                    <div class="config-input"><label>projectId</label><input type="text" id="projectId" placeholder="your-project-id"></div>
+                    <div class="config-input"><label>storageBucket</label><input type="text" id="storageBucket" placeholder="项目名.appspot.com"></div>
+                    <div class="config-input"><label>messagingSenderId</label><input type="text" id="messagingSenderId" placeholder="123456789"></div>
+                    <div class="config-input"><label>appId</label><input type="text" id="appId" placeholder="1:123:web:abc"></div>
+                </div>
+                <button class="btn btn-primary btn-block" id="saveConfigBtn">💾 手动保存配置</button>
             </div>
         </div>
+        
+        <!-- 管理员登录 -->
+        <div class="login-section" style="margin-top: 20px;">
+            <div class="input-group">
+                <input type="password" id="adminPassword" placeholder="🔐 管理员密码" autocomplete="off">
+            </div>
+            <button class="btn btn-primary btn-block" id="adminLoginBtn">📋 进入管理后台</button>
+        </div>
+        
+        <div class="divider"><span>或</span></div>
+        
+        <!-- 客户进入 -->
+        <div class="login-section">
+            <div class="input-group">
+                <input type="text" id="roomCode" placeholder="🔗 粘贴客服发送的链接">
+            </div>
+            <button class="btn btn-success btn-block" id="clientJoinBtn">💬 进入聊天室</button>
+            <div class="footer-note">
+                💡 提示：点击客服发送的专属链接可直接进入聊天
+            </div>
+        </div>
+        
+        <div id="mainMessageArea" class="message-area"></div>
     </div>
     
-    <div class="input-area">
-        <div class="voice-controls">
-            <button id="voiceInputBtn" class="mic-button">🎙️ 语音输入</button>
-            <div class="status-badge" id="voiceStatus">⚡ 点击说话</div>
+    <!-- 视图2：管理后台 -->
+    <div id="adminView" class="view">
+        <button class="back-btn" id="backToMainBtn">← 返回首页</button>
+        <div class="admin-header">
+            <h2>📋 客户管理后台</h2>
+            <p>为每个客户创建专属聊天室，独立控制开关</p>
         </div>
-        <div class="text-input-wrapper">
-            <textarea id="messageInput" rows="1" placeholder="输入中文，自动翻译为西班牙语..." disabled style="resize: none;"></textarea>
-            <button id="sendBtn" disabled>📤 发送</button>
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number" id="totalRooms">0</div><div>总客户</div></div>
+            <div class="stat-card"><div class="stat-number" id="openRooms">0</div><div>🟢 开启中</div></div>
+            <div class="stat-card"><div class="stat-number" id="closedRooms">0</div><div>🔴 已关闭</div></div>
+        </div>
+        <div class="add-client-area">
+            <input type="text" id="newClientName" placeholder="客户名称，如：张先生">
+            <button class="btn btn-primary" id="createRoomBtn">➕ 创建房间</button>
+        </div>
+        <div class="rooms-grid" id="roomsGrid">
+            <div class="empty-state" style="text-align:center;padding:40px;color:#999;">✨ 点击「创建房间」开始添加客户</div>
         </div>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyA8LLIU_vxZ2AS14MDAvGzQRViJ3R--FXY",
-        authDomain: "emp-task-system.firebaseapp.com",
-        projectId: "emp-task-system",
-        storageBucket: "emp-task-system.firebasestorage.app",
-        messagingSenderId: "97538682585",
-        appId: "1:97538682585:web:28c9bf58ad40efb929d8c8"
-    };
+    // ==================== 全局变量 ====================
+    let firebaseInitialized = false;
+    let db = null;
+    let roomsUnsubscribe = null;
+    let currentAdminId = "admin_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+    const ADMIN_PASSWORD = "admin123";
+    
+    function showMessage(msg, isError = true, targetId = 'mainMessageArea') {
+        const msgDiv = document.getElementById(targetId);
+        if (msgDiv) {
+            msgDiv.innerHTML = `<div class="${isError ? 'error-msg' : 'success-msg'}">${msg}</div>`;
+            setTimeout(() => {
+                if (document.getElementById(targetId)?.innerHTML === msgDiv.innerHTML) {
+                    msgDiv.innerHTML = '';
+                }
+            }, 4000);
+        }
+    }
+    
+    function showHelp() {
+        alert(`📋 获取 Firebase 配置的步骤：
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    
-    let currentRoom = null;
-    let currentUserId = null;
-    let unsubscribe = null;
-    let isRoomOpen = false;
-    
-    // 从 URL 获取房间号
-    currentRoom = window.location.hash.substring(1);
-    currentUserId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 8);
-    
-    // 翻译 API
-    const MY_MEMORY_API = "https://api.mymemory.translated.net/get";
-    
-    async function translateText(text, sourceLang, targetLang) {
-        if (!text.trim()) return "";
-        const url = `${MY_MEMORY_API}?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.ok) {
-                const data = await response.json();
-                let translated = data.responseData?.translatedText;
-                if (translated) return translated.replace(/\[[a-z]{2}\]/gi, '').trim();
-            }
-            throw new Error("API fallback");
-        } catch (error) {
-            return localFallback(text, sourceLang, targetLang);
-        }
+1. 访问 https://console.firebase.google.com/
+2. 登录并选择你的项目
+3. 点击左上角「项目设置」⚙️
+4. 找到「您的应用」→ 点击 Web 应用（</>）
+5. 复制 firebaseConfig 中的完整代码
+
+示例复制内容：
+{
+  apiKey: "AIzaSyD...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+}
+
+然后粘贴到上方文本框，点击「一键解析并配置」即可！`);
     }
     
-    function localFallback(text, sourceLang, targetLang) {
-        if (sourceLang === "zh" && targetLang === "es") {
-            const dict = { "你好":"Hola","谢谢":"Gracias","再见":"Adiós","价格":"precio","多少":"cuánto","帮助":"ayuda" };
-            let result = text;
-            for (let [cn, es] of Object.entries(dict)) result = result.replace(new RegExp(cn, 'g'), es);
-            return result === text ? `[ES] ${text}` : result;
-        } else if (sourceLang === "es" && targetLang === "zh") {
-            const dict = { "Hola":"你好","Gracias":"谢谢","Adiós":"再见","precio":"价格","cuánto":"多少","ayuda":"帮助" };
-            let result = text;
-            for (let [es, cn] of Object.entries(dict)) result = result.replace(new RegExp(es, 'gi'), cn);
-            return result === text ? `[中文] ${text}` : result;
-        }
-        return text;
+    function toggleDetail() {
+        const panel = document.getElementById('detailPanel');
+        const isVisible = panel.style.display === 'block';
+        panel.style.display = isVisible ? 'none' : 'block';
     }
     
-    function addMessage(originalText, translatedText, isFromMe, timestamp) {
-        const container = document.getElementById('messagesArea');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isFromMe ? 'sent' : 'received'}`;
-        const timeStr = timestamp ? new Date(timestamp.toDate()).toLocaleTimeString() : new Date().toLocaleTimeString();
-        
-        if (isFromMe) {
-            messageDiv.innerHTML = `
-                <div class="bubble">
-                    <div class="sender-name">🧑 我 (中文)</div>
-                    <div class="message-text">${escapeHtml(originalText)}</div>
-                    <div class="translation-note">🗣️ 客服看到: ${escapeHtml(translatedText)}</div>
-                    <div class="timestamp">${timeStr}</div>
-                </div>
-            `;
-        } else {
-            messageDiv.innerHTML = `
-                <div class="bubble">
-                    <div class="sender-name">🇪🇸 客服 (西班牙语)</div>
-                    <div class="message-text">${escapeHtml(originalText)}</div>
-                    <div class="translation-note">📖 中文翻译: ${escapeHtml(translatedText)}</div>
-                    <div class="timestamp">${timeStr}</div>
-                </div>
-            `;
-        }
-        container.appendChild(messageDiv);
-        container.scrollTop = container.scrollHeight;
-    }
-    
-    function addSystemMessage(text, isError = false) {
-        const container = document.getElementById('messagesArea');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message received';
-        messageDiv.innerHTML = `
-            <div class="bubble">
-                <div class="sender-name">🔒 系统</div>
-                <div class="message-text" style="${isError ? 'color:#dc2626;' : ''}">${escapeHtml(text)}</div>
-            </div>
-        `;
-        container.appendChild(messageDiv);
-        container.scrollTop = container.scrollHeight;
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    async function sendMessage(chineseText) {
-        if (!isRoomOpen) {
-            addSystemMessage("❌ 客服暂未开启对话，请稍后再试", true);
+    // 一键解析粘贴的配置
+    function parseAndFillConfig() {
+        const pasteText = document.getElementById('pasteConfig').value.trim();
+        if (!pasteText) {
+            showMessage('请先粘贴 Firebase 配置内容');
             return;
         }
-        if (!chineseText.trim()) return;
         
-        const spanishTrans = await translateText(chineseText, "zh", "es");
-        
-        await db.collection("customerRooms").doc(currentRoom).collection("messages").add({
-            senderId: currentUserId,
-            originalText: chineseText,
-            translatedText: spanishTrans,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }
-    
-    function listenMessages() {
-        if (unsubscribe) unsubscribe();
-        const messagesRef = db.collection("customerRooms").doc(currentRoom).collection("messages");
-        unsubscribe = messagesRef.orderBy("timestamp", "asc").onSnapshot((snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "added" && change.doc.data().senderId) {
-                    const data = change.doc.data();
-                    const isFromMe = data.senderId === currentUserId;
-                    addMessage(data.originalText, data.translatedText, isFromMe, data.timestamp);
-                }
-            });
-        });
-    }
-    
-    function listenRoomStatus() {
-        return db.collection("customerRooms").doc(currentRoom).onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                isRoomOpen = data.isOpen || false;
-                updateUI();
+        try {
+            let configStr = pasteText;
+            configStr = configStr.replace(/\/\/.*$/gm, '');
+            configStr = configStr.replace(/(\w+):/g, '"$1":');
+            const config = JSON.parse(configStr);
+            
+            if (config.apiKey) document.getElementById('apiKey').value = config.apiKey;
+            if (config.authDomain) document.getElementById('authDomain').value = config.authDomain;
+            if (config.projectId) document.getElementById('projectId').value = config.projectId;
+            if (config.storageBucket) document.getElementById('storageBucket').value = config.storageBucket;
+            if (config.messagingSenderId) document.getElementById('messagingSenderId').value = config.messagingSenderId;
+            if (config.appId) document.getElementById('appId').value = config.appId;
+            
+            // 自动保存配置
+            saveConfigAndConnect();
+            
+        } catch (e) {
+            // 正则提取备选
+            try {
+                const text = pasteText;
+                const apiKeyMatch = text.match(/apiKey["']?\s*:\s*["']([^"']+)["']/);
+                const projectIdMatch = text.match(/projectId["']?\s*:\s*["']([^"']+)["']/);
+                const authDomainMatch = text.match(/authDomain["']?\s*:\s*["']([^"']+)["']/);
+                const storageMatch = text.match(/storageBucket["']?\s*:\s*["']([^"']+)["']/);
+                const senderMatch = text.match(/messagingSenderId["']?\s*:\s*["']([^"']+)["']/);
+                const appIdMatch = text.match(/appId["']?\s*:\s*["']([^"']+)["']/);
                 
-                if (isRoomOpen) {
-                    addSystemMessage("✅ 客服已开启对话，您可以发送消息了");
+                if (apiKeyMatch) document.getElementById('apiKey').value = apiKeyMatch[1];
+                if (projectIdMatch) document.getElementById('projectId').value = projectIdMatch[1];
+                if (authDomainMatch) document.getElementById('authDomain').value = authDomainMatch[1];
+                if (storageMatch) document.getElementById('storageBucket').value = storageMatch[1];
+                if (senderMatch) document.getElementById('messagingSenderId').value = senderMatch[1];
+                if (appIdMatch) document.getElementById('appId').value = appIdMatch[1];
+                
+                if (apiKeyMatch || projectIdMatch) {
+                    saveConfigAndConnect();
                 } else {
-                    addSystemMessage("🔒 客服暂未开启对话或已关闭，请等待", true);
+                    showMessage('❌ 无法解析配置，请确保格式正确');
                 }
-            } else {
-                addSystemMessage("❌ 房间不存在或已被删除", true);
-                document.getElementById('sendBtn').disabled = true;
-                document.getElementById('messageInput').disabled = true;
-                document.getElementById('voiceInputBtn').disabled = true;
+            } catch(e2) {
+                showMessage('❌ 无法解析配置，请确保格式正确');
             }
+        }
+    }
+    
+    function saveConfigAndConnect() {
+        const config = {
+            apiKey: document.getElementById('apiKey').value.trim(),
+            authDomain: document.getElementById('authDomain').value.trim(),
+            projectId: document.getElementById('projectId').value.trim(),
+            storageBucket: document.getElementById('storageBucket').value.trim(),
+            messagingSenderId: document.getElementById('messagingSenderId').value.trim(),
+            appId: document.getElementById('appId').value.trim()
+        };
+        
+        if (!config.apiKey || !config.projectId) {
+            showMessage('请至少填写 apiKey 和 projectId');
+            return;
+        }
+        
+        localStorage.setItem('firebase_config', JSON.stringify(config));
+        initFirebase(config);
+    }
+    
+    async function initFirebase(config) {
+        const statusSpan = document.getElementById('configStatus');
+        statusSpan.innerText = '连接中...';
+        statusSpan.className = 'status-badge status-disconnected';
+        
+        try {
+            if (firebase.apps.length > 0) {
+                try { await firebase.apps[0].delete(); } catch(e) {}
+            }
+            firebase.initializeApp(config);
+            db = firebase.firestore();
+            await db.collection('_test').doc('_test').set({test: true}, {merge: true});
+            
+            statusSpan.innerText = '已连接 ✅';
+            statusSpan.className = 'status-badge status-connected';
+            firebaseInitialized = true;
+            showMessage('✅ Firebase 配置成功！可以开始使用了', false);
+            
+        } catch (error) {
+            statusSpan.innerText = '连接失败';
+            statusSpan.className = 'status-badge status-disconnected';
+            firebaseInitialized = false;
+            showMessage('连接失败：请确保 Firestore 数据库为「测试模式」');
+        }
+    }
+    
+    function loadSavedConfigAndConnect() {
+        const saved = localStorage.getItem('firebase_config');
+        if (saved) {
+            try {
+                const config = JSON.parse(saved);
+                document.getElementById('apiKey').value = config.apiKey || '';
+                document.getElementById('authDomain').value = config.authDomain || '';
+                document.getElementById('projectId').value = config.projectId || '';
+                document.getElementById('storageBucket').value = config.storageBucket || '';
+                document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
+                document.getElementById('appId').value = config.appId || '';
+                if (config.apiKey && config.projectId) {
+                    initFirebase(config);
+                }
+            } catch(e) {}
+        }
+    }
+    
+    function showView(viewName) {
+        document.getElementById('mainView').classList.remove('active');
+        document.getElementById('adminView').classList.remove('active');
+        document.getElementById(`${viewName}View`).classList.add('active');
+    }
+    
+    // ==================== 管理后台 ====================
+    async function loadRooms() {
+        if (!db) return;
+        if (roomsUnsubscribe) roomsUnsubscribe();
+        roomsUnsubscribe = db.collection("customerRooms").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+            const rooms = [];
+            snapshot.forEach(doc => rooms.push({ id: doc.id, ...doc.data() }));
+            renderRooms(rooms);
         });
     }
     
-    function updateUI() {
-        const sendBtn = document.getElementById('sendBtn');
-        const messageInput = document.getElementById('messageInput');
-        const voiceBtn = document.getElementById('voiceInputBtn');
-        const statusSpan = document.getElementById('roomStatus');
-        
-        if (isRoomOpen) {
-            sendBtn.disabled = false;
-            messageInput.disabled = false;
-            voiceBtn.disabled = false;
-            statusSpan.innerText = "🟢 对话已开启";
-            statusSpan.className = "room-status status-open";
-        } else {
-            sendBtn.disabled = true;
-            messageInput.disabled = true;
-            voiceBtn.disabled = true;
-            statusSpan.innerText = "🔴 等待客服开启";
-            statusSpan.className = "room-status status-closed";
+    function renderRooms(rooms) {
+        const grid = document.getElementById('roomsGrid');
+        if (!rooms.length) {
+            grid.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">✨ 点击「创建房间」开始添加客户</div>';
+            document.getElementById('totalRooms').innerText = '0';
+            document.getElementById('openRooms').innerText = '0';
+            document.getElementById('closedRooms').innerText = '0';
+            return;
         }
+        
+        let openCount = 0, closedCount = 0;
+        const baseUrl = window.location.href.split('#')[0];
+        
+        grid.innerHTML = rooms.map(room => {
+            const isOpen = room.isOpen || false;
+            if (isOpen) openCount++; else closedCount++;
+            const roomLink = baseUrl + '#' + room.roomId;
+            return `
+                <div class="room-card">
+                    <div class="room-header">
+                        <span class="client-name">👤 ${escapeHtml(room.clientName)}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="status-badge ${isOpen ? 'status-connected' : 'status-disconnected'}" style="font-size:0.7rem;">${isOpen ? '🟢 开启' : '🔴 关闭'}</span>
+                            <div class="toggle-switch ${isOpen ? 'active' : ''}" onclick="window.toggleRoom('${room.roomId}', ${isOpen})"></div>
+                        </div>
+                    </div>
+                    <div class="room-link">🔗 ${escapeHtml(roomLink)}</div>
+                    <div class="room-actions">
+                        <button class="copy-room-btn" onclick="window.copyRoomLink('${escapeHtml(roomLink)}', '${escapeHtml(room.clientName)}')">📋 复制链接</button>
+                        <button class="delete-room-btn" onclick="window.deleteRoom('${room.roomId}', '${escapeHtml(room.clientName)}')">🗑️ 删除</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        document.getElementById('totalRooms').innerText = rooms.length;
+        document.getElementById('openRooms').innerText = openCount;
+        document.getElementById('closedRooms').innerText = closedCount;
     }
     
-    // 语音识别
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition = null;
-    let isListening = false;
+    function generateRoomId() { return "room_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10); }
     
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        
-        document.getElementById('voiceInputBtn').addEventListener('click', () => {
-            if (!isRoomOpen) {
-                addSystemMessage("❌ 客服暂未开启对话", true);
-                return;
-            }
-            if (isListening) { 
-                recognition.stop(); 
-                return; 
-            }
-            recognition.start();
-            isListening = true;
-            document.getElementById('voiceInputBtn').classList.add('recording');
-            document.getElementById('voiceStatus').innerHTML = "🎙️ 请说中文...";
+    async function createRoom() {
+        const clientName = document.getElementById('newClientName').value.trim();
+        if (!clientName) { alert('请输入客户名称'); return; }
+        const roomId = generateRoomId();
+        const baseUrl = window.location.href.split('#')[0];
+        const roomLink = baseUrl + '#' + roomId;
+        await db.collection("customerRooms").doc(roomId).set({
+            roomId, clientName, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            isOpen: false, creator: currentAdminId, roomLink
         });
-        
-        recognition.onresult = async (event) => {
-            const spokenText = event.results[0][0].transcript;
-            document.getElementById('voiceStatus').innerHTML = `✅ 识别: "${spokenText}"`;
-            await sendMessage(spokenText);
-            document.getElementById('voiceStatus').innerHTML = "⚡ 点击说话";
-            document.getElementById('voiceInputBtn').classList.remove('recording');
-            isListening = false;
-        };
-        
-        recognition.onerror = () => {
-            document.getElementById('voiceStatus').innerHTML = "❌ 识别失败";
-            document.getElementById('voiceInputBtn').classList.remove('recording');
-            isListening = false;
-        };
-        
-        recognition.onend = () => {
-            document.getElementById('voiceInputBtn').classList.remove('recording');
-            isListening = false;
-        };
-    } else {
-        document.getElementById('voiceInputBtn').disabled = true;
-        document.getElementById('voiceStatus').innerText = "不支持语音";
+        alert(`✅ 已为「${clientName}」创建房间！\n\n链接: ${roomLink}`);
+        document.getElementById('newClientName').value = '';
     }
     
-    document.getElementById('sendBtn').addEventListener('click', async () => {
-        const text = document.getElementById('messageInput').value.trim();
-        if (text) {
-            await sendMessage(text);
-            document.getElementById('messageInput').value = '';
-            document.getElementById('messageInput').style.height = 'auto';
+    async function deleteRoom(roomId, clientName) {
+        if (confirm(`确定要删除「${clientName}」的房间吗？`)) {
+            await db.collection("customerRooms").doc(roomId).delete();
         }
-    });
-    
-    document.getElementById('messageInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            document.getElementById('sendBtn').click();
-        }
-    });
-    
-    document.getElementById('messageInput').addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 80) + 'px';
-    });
-    
-    // 启动
-    if (currentRoom) {
-        listenRoomStatus();
-        listenMessages();
-    } else {
-        addSystemMessage("❌ 无效的链接，请联系客服获取正确的聊天链接", true);
     }
+    
+    async function toggleRoom(roomId, currentState) {
+        await db.collection("customerRooms").doc(roomId).update({ isOpen: !currentState });
+    }
+    
+    function copyRoomLink(link, clientName) {
+        navigator.clipboard.writeText(link);
+        alert(`✅ 「${clientName}」的链接已复制`);
+    }
+    
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+    
+    async function adminLogin() {
+        const password = document.getElementById('adminPassword').value;
+        if (!firebaseInitialized) { showMessage('请先配置 Firebase'); return; }
+        if (password !== ADMIN_PASSWORD) { showMessage('密码错误'); return; }
+        showMessage('✅ 登录成功', false);
+        showView('admin');
+        await loadRooms();
+    }
+    
+    function clientJoin() {
+        let input = document.getElementById('roomCode').value.trim();
+        if (!input) { showMessage('请输入客服发送的链接'); return; }
+        let roomId = input.includes('#') ? input.split('#')[1] : input;
+        const match = roomId.match(/room_\d+_[a-z0-9]+/);
+        if (match) roomId = match[0];
+        if (!roomId || !roomId.startsWith('room_')) { showMessage('无效的链接格式'); return; }
+        window.location.href = window.location.href.split('#')[0] + '#' + roomId;
+    }
+    
+    function checkUrlForRoom() {
+        const hash = window.location.hash.substring(1);
+        if (hash && hash.startsWith('room_')) {
+            const savedConfig = localStorage.getItem('firebase_config');
+            if (!savedConfig) {
+                document.body.innerHTML = '<div style="text-align:center;padding:50px"><h2>⚠️ 未配置 Firebase</h2><p>请先联系客服配置系统</p></div>';
+                return true;
+            }
+            const config = JSON.parse(savedConfig);
+            document.write(generateChatPage(hash, config));
+            document.close();
+            return true;
+        }
+        return false;
+    }
+    
+    function generateChatPage(roomId, config) {
+        return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>双语翻译客服</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"><\/script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui;background:#f5f7fb;height:100vh;display:flex;flex-direction:column}.chat-header{background:linear-gradient(135deg,#667eea,#764ba2);padding:16px;color:white;display:flex;justify-content:space-between}.lang-bar{background:white;padding:8px 16px;display:flex;justify-content:space-between;font-size:0.7rem}.messages-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}.message{display:flex;max-width:85%}.message.sent{align-self:flex-end}.message.received{align-self:flex-start}.sent .bubble{background:#667eea;color:white;border-bottom-right-radius:4px}.received .bubble{background:white;border:1px solid #e5e5e5;border-bottom-left-radius:4px}.bubble{padding:14px 18px;border-radius:24px}.sender-name{font-size:0.65rem;margin-bottom:6px}.sent .sender-name{text-align:right}.received .sender-name{color:#f59e0b}.main-text{font-size:1.1rem;font-weight:500;margin-bottom:8px}.translated-text{font-size:0.85rem;padding-top:8px;margin-top:6px;border-top:1px dashed #ccc}.input-area{background:white;padding:12px 16px;display:flex;gap:10px}.input-wrapper{flex:1;display:flex;background:#f5f7fb;border-radius:30px;padding:4px 8px 4px 16px}#messageInput{flex:1;padding:12px 0;border:none;background:transparent;font-size:1rem;outline:none}.send-btn,.mic-btn,.tts-btn{width:44px;height:44px;border-radius:30px;border:none;font-size:1.2rem;cursor:pointer}.send-btn{background:#667eea;color:white}.mic-btn{background:#f0f0f0}.mic-btn.recording{background:#ff3b30;color:white}.system-message{text-align:center;font-size:0.7rem;color:#999}
+</style>
+</head>
+<body>
+<div class="chat-header"><div><strong>🌐 双语翻译客服</strong><div style="font-size:0.7rem;">中文 ↔ Español</div></div><div id="statusBadge" style="background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:30px;">⏳ 连接中</div></div>
+<div class="lang-bar"><span>🇨🇳 你说中文 → 客服看到 Español</span><span>🇪🇸 客服说 Español → 你看到 中文</span></div>
+<div class="messages-area" id="messagesArea"><div class="system-message">正在连接房间...</div></div>
+<div class="input-area"><div class="input-wrapper"><input type="text" id="messageInput" placeholder="输入中文，自动翻译..." disabled><button id="sendBtn" class="send-btn" disabled>📤</button></div><button id="voiceBtn" class="mic-btn" disabled>🎙️</button><button id="ttsBtn" class="tts-btn">🔊</button></div>
+<script>
+const config=${JSON.stringify(config)}; firebase.initializeApp(config); const db=firebase.firestore(); const roomId="${roomId}"; const userId="user_"+Date.now(); let isOpen=false,unsub=null;
+const translateApi="https://api.mymemory.translated.net/get";
+async function translate(t,s,target){if(!t.trim())return t;try{const r=await fetch(translateApi+"?q="+encodeURIComponent(t)+"&langpair="+s+"|"+target);const d=await r.json();let tr=d.responseData?.translatedText;return tr?tr.replace(/\\[[a-z]{2}\\]/gi,'').trim():t;}catch(e){return t;}}
+function addMsg(sender,orig,trans,isMe,ts){const c=document.getElementById('messagesArea');if(c.children.length===1&&c.children[0].innerText.includes('正在连接'))c.innerHTML='';const div=document.createElement('div');div.className='message '+(isMe?'sent':'received');const time=ts?new Date(ts.toDate()).toLocaleTimeString():new Date().toLocaleTimeString();if(isMe){div.innerHTML='<div class="bubble"><div class="sender-name">🇨🇳 你 (中文)</div><div class="main-text">'+escapeHtml(orig)+'</div><div class="translated-text">📤 客服看到:<br><strong>'+escapeHtml(trans)+'</strong></div><div class="timestamp">'+time+'</div></div>';}else{div.innerHTML='<div class="bubble"><div class="sender-name">🇪🇸 客服 (Español)</div><div class="main-text">'+escapeHtml(orig)+'</div><div class="translated-text">📖 中文翻译:<br><strong style="color:#f59e0b;font-size:1rem;">'+escapeHtml(trans)+'</strong></div><div class="timestamp">'+time+'</div></div>';}c.appendChild(div);c.scrollTop=c.scrollHeight;}
+function addSysMsg(msg,err){const c=document.getElementById('messagesArea');const d=document.createElement('div');d.className='system-message';d.style.color=err?'red':'#999';d.innerText=msg;c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function escapeHtml(s){if(!s)return '';return s.replace(/[&<>]/g,m=>m=='&'?'&amp;':m=='<'?'&lt;':'&gt;');}
+async function sendMsg(text){if(!isOpen){addSysMsg("客服暂未开启对话",true);return;}if(!text.trim())return;const trans=await translate(text,"zh","es");await db.collection("customerRooms").doc(roomId).collection("messages").add({senderId:userId,originalText:text,translatedText:trans,timestamp:new Date()});}
+function listenMsgs(){if(unsub)unsub();unsub=db.collection("customerRooms").doc(roomId).collection("messages").orderBy("timestamp","asc").onSnapshot(s=>{s.docChanges().forEach(c=>{if(c.type==="added"&&c.doc.data().senderId){const d=c.doc.data();addMsg(d.senderId,d.originalText,d.translatedText,d.senderId===userId,d.timestamp);}});});}
+db.collection("customerRooms").doc(roomId).onSnapshot(d=>{if(d.exists){isOpen=d.data().isOpen||false;const send=document.getElementById('sendBtn'),inp=document.getElementById('messageInput'),voice=document.getElementById('voiceBtn'),badge=document.getElementById('statusBadge');if(isOpen){send.disabled=false;inp.disabled=false;voice.disabled=false;badge.innerText='🟢 对话已开启';addSysMsg("客服已开启对话");}else{send.disabled=true;inp.disabled=true;voice.disabled=true;badge.innerText='🔴 等待开启';}}else{addSysMsg("房间不存在",true);}});
+listenMsgs();
+document.getElementById('sendBtn').onclick=async()=>{const v=document.getElementById('messageInput').value.trim();if(v){await sendMsg(v);document.getElementById('messageInput').value='';}};
+document.getElementById('messageInput').onkeypress=e=>{if(e.key==='Enter')document.getElementById('sendBtn').click();};
+let recog=null,listening=false;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){recog=new SR();recog.lang='zh-CN';document.getElementById('voiceBtn').onclick=()=>{if(!isOpen){addSysMsg("客服未开启",true);return;}if(listening){recog.stop();}else{recog.start();listening=true;document.getElementById('voiceBtn').classList.add('recording');}};recog.onresult=async(e)=>{const txt=e.results[0][0].transcript;addSysMsg("🎤 识别: "+txt);await sendMsg(txt);document.getElementById('voiceBtn').classList.remove('recording');listening=false;};recog.onerror=()=>{document.getElementById('voiceBtn').classList.remove('recording');listening=false;};recog.onend=()=>{document.getElementById('voiceBtn').classList.remove('recording');listening=false;};}else{document.getElementById('voiceBtn').disabled=true;}
+let ttsOn=true;document.getElementById('ttsBtn').onclick=()=>{ttsOn=!ttsOn;document.getElementById('ttsBtn').innerText=ttsOn?'🔊':'🔇';if(!ttsOn)window.speechSynthesis.cancel();};
+<\/script>
+</body>
+</html>`;
+    }
+    
+    // ==================== 事件绑定 ====================
+    document.getElementById('saveConfigBtn').onclick = saveConfigAndConnect;
+    document.getElementById('adminLoginBtn').onclick = adminLogin;
+    document.getElementById('clientJoinBtn').onclick = clientJoin;
+    document.getElementById('backToMainBtn').onclick = () => showView('main');
+    document.getElementById('createRoomBtn').onclick = createRoom;
+    document.getElementById('newClientName').onkeypress = (e) => { if(e.key === 'Enter') createRoom(); };
+    document.getElementById('adminPassword').onkeypress = (e) => { if(e.key === 'Enter') adminLogin(); };
+    document.getElementById('roomCode').onkeypress = (e) => { if(e.key === 'Enter') clientJoin(); };
+    
+    window.toggleRoom = toggleRoom;
+    window.deleteRoom = deleteRoom;
+    window.copyRoomLink = copyRoomLink;
+    window.parseAndFillConfig = parseAndFillConfig;
+    
+    loadSavedConfigAndConnect();
+    if (!checkUrlForRoom()) {}
 </script>
 </body>
 </html>
