@@ -8,14 +8,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
         .container {
             max-width: 550px;
             width: 100%;
@@ -25,27 +23,22 @@
             padding: 32px 24px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
-        
-        /* 视图切换 */
         .view { display: none; }
         .view.active { display: block; }
         
-        /* 一键粘贴区域 - 最显眼 */
+        /* 一键粘贴区域 */
         .paste-card {
             background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
             border: 2px dashed #667eea;
             border-radius: 24px;
             padding: 20px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         .paste-title {
             font-size: 1rem;
             font-weight: 700;
             color: #667eea;
             margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         .paste-input {
             width: 100%;
@@ -53,13 +46,12 @@
             border: 1px solid #e0e0e0;
             border-radius: 20px;
             font-size: 0.8rem;
-            font-family: 'Monaco', 'Menlo', monospace;
+            font-family: monospace;
             outline: none;
             resize: vertical;
             background: white;
             margin-bottom: 12px;
         }
-        .paste-input:focus { border-color: #667eea; }
         .paste-btn {
             background: #667eea;
             color: white;
@@ -69,17 +61,16 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            font-size: 0.9rem;
         }
-        .paste-help {
-            font-size: 0.65rem;
-            color: #667eea;
-            text-align: center;
+        .debug-info {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 16px;
+            font-size: 0.7rem;
             margin-top: 12px;
-            cursor: pointer;
+            font-family: monospace;
+            word-break: break-all;
         }
-        
-        /* 配置状态 */
         .config-status {
             background: #f0f0f0;
             padding: 12px 16px;
@@ -89,7 +80,6 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 8px;
         }
         .status-badge {
             font-size: 0.75rem;
@@ -98,41 +88,7 @@
         }
         .status-connected { background: #d1fae5; color: #065f46; }
         .status-disconnected { background: #fee2e2; color: #991b1b; }
-        
-        /* 折叠配置区域 */
-        .detail-config {
-            margin-top: 16px;
-            border-top: 1px solid #e5e5e5;
-            padding-top: 16px;
-        }
-        .detail-toggle {
-            color: #667eea;
-            font-size: 0.75rem;
-            cursor: pointer;
-            text-align: center;
-            margin-bottom: 12px;
-        }
-        .config-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-        .config-input label {
-            font-size: 0.7rem;
-            color: #666;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .config-input input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 16px;
-            font-size: 0.8rem;
-            outline: none;
-            background: #f9f9f9;
-        }
-        .config-input input:focus { border-color: #667eea; background: white; }
+        .status-connecting { background: #fef3c7; color: #92400e; }
         
         .btn {
             padding: 12px 20px;
@@ -156,12 +112,9 @@
             outline: none;
             text-align: center;
         }
-        .input-group input:focus { border-color: #667eea; }
-        
         .message-area { margin-top: 16px; }
         .error-msg { color: #ef4444; font-size: 0.75rem; text-align: center; padding: 8px; background: #fee2e2; border-radius: 20px; }
         .success-msg { color: #10b981; font-size: 0.75rem; text-align: center; padding: 8px; background: #d1fae5; border-radius: 20px; }
-        
         .logo { text-align: center; margin-bottom: 20px; }
         .logo-icon { width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 25px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; }
         h1 { font-size: 1.6rem; text-align: center; margin-bottom: 8px; color: #1e293b; }
@@ -169,7 +122,6 @@
         .divider { text-align: center; margin: 20px 0; position: relative; }
         .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e2e8f0; }
         .divider span { background: white; padding: 0 12px; position: relative; color: #94a3b8; font-size: 0.75rem; }
-        .footer-note { text-align: center; font-size: 0.7rem; color: #94a3b8; margin-top: 20px; }
         
         /* 管理后台样式 */
         .admin-header { background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 24px; color: white; margin-bottom: 20px; }
@@ -179,7 +131,6 @@
         .rooms-grid { display: grid; gap: 16px; max-height: 400px; overflow-y: auto; }
         .room-card { background: white; border-radius: 20px; padding: 16px; border: 1px solid #e5e5e5; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-        .client-name { font-size: 1rem; font-weight: bold; }
         .toggle-switch { width: 50px; height: 26px; background: #ccc; border-radius: 30px; position: relative; cursor: pointer; }
         .toggle-switch.active { background: #34c759; }
         .toggle-switch::after { content: ''; width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: 0.2s; }
@@ -204,13 +155,10 @@
         <h1>双语翻译客服</h1>
         <div class="subtitle">中文 ↔ 西班牙语 实时互译 · 语音对话</div>
         
-        <!-- 🔥 一键粘贴区域 - 最显眼的位置 -->
+        <!-- 一键粘贴区域 -->
         <div class="paste-card">
-            <div class="paste-title">
-                📋 一键配置 Firebase
-            </div>
-            <textarea id="pasteConfig" class="paste-input" rows="4" placeholder='从 Firebase 控制台复制整个配置，例如：
-
+            <div class="paste-title">📋 一键配置 Firebase</div>
+            <textarea id="pasteConfig" class="paste-input" rows="4" placeholder='从 Firebase 控制台复制配置，例如：
 {
   apiKey: "AIzaSyD...",
   authDomain: "xxx.firebaseapp.com",
@@ -220,30 +168,16 @@
   appId: "1:123:web:abc"
 }'></textarea>
             <button class="paste-btn" onclick="parseAndFillConfig()">✨ 一键解析并配置</button>
-            <div class="paste-help" onclick="showHelp()">📖 不知道如何获取？点击查看步骤</div>
         </div>
         
-        <!-- 配置状态显示 -->
+        <!-- 配置状态 -->
         <div class="config-status">
             <span>🔥 Firebase 状态</span>
             <span id="configStatus" class="status-badge status-disconnected">未配置</span>
         </div>
         
-        <!-- 详细配置（可折叠，一般用不到） -->
-        <div class="detail-config">
-            <div class="detail-toggle" onclick="toggleDetail()">▼ 手动填写配置（高级）</div>
-            <div id="detailPanel" style="display: none;">
-                <div class="config-grid">
-                    <div class="config-input"><label>apiKey</label><input type="text" id="apiKey" placeholder="AIzaSyD..."></div>
-                    <div class="config-input"><label>authDomain</label><input type="text" id="authDomain" placeholder="项目名.firebaseapp.com"></div>
-                    <div class="config-input"><label>projectId</label><input type="text" id="projectId" placeholder="your-project-id"></div>
-                    <div class="config-input"><label>storageBucket</label><input type="text" id="storageBucket" placeholder="项目名.appspot.com"></div>
-                    <div class="config-input"><label>messagingSenderId</label><input type="text" id="messagingSenderId" placeholder="123456789"></div>
-                    <div class="config-input"><label>appId</label><input type="text" id="appId" placeholder="1:123:web:abc"></div>
-                </div>
-                <button class="btn btn-primary btn-block" id="saveConfigBtn">💾 手动保存配置</button>
-            </div>
-        </div>
+        <!-- 调试信息 -->
+        <div id="debugInfo" class="debug-info" style="display:none;"></div>
         
         <!-- 管理员登录 -->
         <div class="login-section" style="margin-top: 20px;">
@@ -261,7 +195,7 @@
                 <input type="text" id="roomCode" placeholder="🔗 粘贴客服发送的链接">
             </div>
             <button class="btn btn-success btn-block" id="clientJoinBtn">💬 进入聊天室</button>
-            <div class="footer-note">
+            <div class="footer-note" style="text-align:center;font-size:0.7rem;color:#94a3b8;margin-top:16px;">
                 💡 提示：点击客服发送的专属链接可直接进入聊天
             </div>
         </div>
@@ -286,7 +220,7 @@
             <button class="btn btn-primary" id="createRoomBtn">➕ 创建房间</button>
         </div>
         <div class="rooms-grid" id="roomsGrid">
-            <div class="empty-state" style="text-align:center;padding:40px;color:#999;">✨ 点击「创建房间」开始添加客户</div>
+            <div style="text-align:center;padding:40px;color:#999;">请先确保 Firebase 已连接</div>
         </div>
     </div>
 </div>
@@ -307,8 +241,21 @@
                 if (document.getElementById(targetId)?.innerHTML === msgDiv.innerHTML) {
                     msgDiv.innerHTML = '';
                 }
-            }, 4000);
+            }, 5000);
         }
+    }
+    
+    function showDebug(msg) {
+        const debugDiv = document.getElementById('debugInfo');
+        debugDiv.style.display = 'block';
+        debugDiv.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+        console.log(msg);
+    }
+    
+    function clearDebug() {
+        const debugDiv = document.getElementById('debugInfo');
+        debugDiv.innerHTML = '';
+        debugDiv.style.display = 'none';
     }
     
     function showHelp() {
@@ -320,23 +267,7 @@
 4. 找到「您的应用」→ 点击 Web 应用（</>）
 5. 复制 firebaseConfig 中的完整代码
 
-示例复制内容：
-{
-  apiKey: "AIzaSyD...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
-}
-
-然后粘贴到上方文本框，点击「一键解析并配置」即可！`);
-    }
-    
-    function toggleDetail() {
-        const panel = document.getElementById('detailPanel');
-        const isVisible = panel.style.display === 'block';
-        panel.style.display = isVisible ? 'none' : 'block';
+⚠️ 重要：请确保 Firestore 数据库已开启「测试模式」！`);
     }
     
     // 一键解析粘贴的配置
@@ -347,23 +278,26 @@
             return;
         }
         
+        clearDebug();
+        showDebug('开始解析配置...');
+        
         try {
             let configStr = pasteText;
             configStr = configStr.replace(/\/\/.*$/gm, '');
             configStr = configStr.replace(/(\w+):/g, '"$1":');
             const config = JSON.parse(configStr);
             
-            if (config.apiKey) document.getElementById('apiKey').value = config.apiKey;
-            if (config.authDomain) document.getElementById('authDomain').value = config.authDomain;
-            if (config.projectId) document.getElementById('projectId').value = config.projectId;
-            if (config.storageBucket) document.getElementById('storageBucket').value = config.storageBucket;
-            if (config.messagingSenderId) document.getElementById('messagingSenderId').value = config.messagingSenderId;
-            if (config.appId) document.getElementById('appId').value = config.appId;
+            showDebug(`解析成功: projectId = ${config.projectId}`);
             
-            // 自动保存配置
-            saveConfigAndConnect();
+            // 保存配置
+            localStorage.setItem('firebase_config', JSON.stringify(config));
+            showDebug('配置已保存到本地');
+            
+            // 连接 Firebase
+            initFirebase(config);
             
         } catch (e) {
+            showDebug(`JSON解析失败: ${e.message}`);
             // 正则提取备选
             try {
                 const text = pasteText;
@@ -374,66 +308,75 @@
                 const senderMatch = text.match(/messagingSenderId["']?\s*:\s*["']([^"']+)["']/);
                 const appIdMatch = text.match(/appId["']?\s*:\s*["']([^"']+)["']/);
                 
-                if (apiKeyMatch) document.getElementById('apiKey').value = apiKeyMatch[1];
-                if (projectIdMatch) document.getElementById('projectId').value = projectIdMatch[1];
-                if (authDomainMatch) document.getElementById('authDomain').value = authDomainMatch[1];
-                if (storageMatch) document.getElementById('storageBucket').value = storageMatch[1];
-                if (senderMatch) document.getElementById('messagingSenderId').value = senderMatch[1];
-                if (appIdMatch) document.getElementById('appId').value = appIdMatch[1];
+                const config = {};
+                if (apiKeyMatch) config.apiKey = apiKeyMatch[1];
+                if (projectIdMatch) config.projectId = projectIdMatch[1];
+                if (authDomainMatch) config.authDomain = authDomainMatch[1];
+                if (storageMatch) config.storageBucket = storageMatch[1];
+                if (senderMatch) config.messagingSenderId = senderMatch[1];
+                if (appIdMatch) config.appId = appIdMatch[1];
                 
-                if (apiKeyMatch || projectIdMatch) {
-                    saveConfigAndConnect();
+                if (config.apiKey && config.projectId) {
+                    showDebug(`正则提取成功: projectId = ${config.projectId}`);
+                    localStorage.setItem('firebase_config', JSON.stringify(config));
+                    initFirebase(config);
                 } else {
-                    showMessage('❌ 无法解析配置，请确保格式正确');
+                    showDebug('无法提取 apiKey 或 projectId');
+                    showMessage('❌ 无法解析配置，请检查格式');
                 }
             } catch(e2) {
+                showDebug(`正则提取也失败: ${e2.message}`);
                 showMessage('❌ 无法解析配置，请确保格式正确');
             }
         }
     }
     
-    function saveConfigAndConnect() {
-        const config = {
-            apiKey: document.getElementById('apiKey').value.trim(),
-            authDomain: document.getElementById('authDomain').value.trim(),
-            projectId: document.getElementById('projectId').value.trim(),
-            storageBucket: document.getElementById('storageBucket').value.trim(),
-            messagingSenderId: document.getElementById('messagingSenderId').value.trim(),
-            appId: document.getElementById('appId').value.trim()
-        };
-        
-        if (!config.apiKey || !config.projectId) {
-            showMessage('请至少填写 apiKey 和 projectId');
-            return;
-        }
-        
-        localStorage.setItem('firebase_config', JSON.stringify(config));
-        initFirebase(config);
-    }
-    
     async function initFirebase(config) {
         const statusSpan = document.getElementById('configStatus');
         statusSpan.innerText = '连接中...';
-        statusSpan.className = 'status-badge status-disconnected';
+        statusSpan.className = 'status-badge status-connecting';
+        
+        showDebug(`开始连接 Firebase: projectId = ${config.projectId}`);
         
         try {
+            // 删除已有实例
             if (firebase.apps.length > 0) {
-                try { await firebase.apps[0].delete(); } catch(e) {}
+                showDebug('删除已有 Firebase 实例');
+                try { await firebase.apps[0].delete(); } catch(e) { showDebug(`删除失败: ${e.message}`); }
             }
+            
+            // 初始化
+            showDebug('初始化 Firebase...');
             firebase.initializeApp(config);
             db = firebase.firestore();
-            await db.collection('_test').doc('_test').set({test: true}, {merge: true});
+            
+            // 测试连接
+            showDebug('测试 Firestore 连接...');
+            await db.collection('_test').doc('_test').set({test: true, time: Date.now()}, {merge: true});
             
             statusSpan.innerText = '已连接 ✅';
             statusSpan.className = 'status-badge status-connected';
             firebaseInitialized = true;
+            showDebug('✅ Firebase 连接成功！');
             showMessage('✅ Firebase 配置成功！可以开始使用了', false);
             
         } catch (error) {
+            console.error('Firebase 连接失败:', error);
+            showDebug(`❌ 连接失败: ${error.message}`);
+            
             statusSpan.innerText = '连接失败';
             statusSpan.className = 'status-badge status-disconnected';
             firebaseInitialized = false;
-            showMessage('连接失败：请确保 Firestore 数据库为「测试模式」');
+            
+            let errorMsg = error.message || '';
+            if (errorMsg.includes('permission') || errorMsg.includes('denied') || errorMsg.includes('Missing')) {
+                showMessage('❌ 权限错误：请检查 Firestore 数据库是否为「测试模式」');
+                showDebug('提示：请在 Firebase 控制台 → Firestore Database → 规则 → 设置为测试模式');
+            } else if (errorMsg.includes('not found') || errorMsg.includes('Invalid')) {
+                showMessage('❌ 项目配置错误：请检查 projectId 是否正确');
+            } else {
+                showMessage(`❌ 连接失败: ${errorMsg.substring(0, 100)}`);
+            }
         }
     }
     
@@ -442,16 +385,17 @@
         if (saved) {
             try {
                 const config = JSON.parse(saved);
-                document.getElementById('apiKey').value = config.apiKey || '';
-                document.getElementById('authDomain').value = config.authDomain || '';
-                document.getElementById('projectId').value = config.projectId || '';
-                document.getElementById('storageBucket').value = config.storageBucket || '';
-                document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
-                document.getElementById('appId').value = config.appId || '';
+                showDebug(`读取已保存配置: ${config.projectId}`);
                 if (config.apiKey && config.projectId) {
                     initFirebase(config);
+                } else {
+                    showDebug('已保存配置不完整，请重新配置');
                 }
-            } catch(e) {}
+            } catch(e) {
+                showDebug(`读取配置失败: ${e.message}`);
+            }
+        } else {
+            showDebug('没有已保存的配置');
         }
     }
     
@@ -463,12 +407,22 @@
     
     // ==================== 管理后台 ====================
     async function loadRooms() {
-        if (!db) return;
+        if (!db) {
+            showMessage('Firebase 未连接', true, 'mainMessageArea');
+            return;
+        }
+        
+        showDebug('开始加载房间列表...');
+        
         if (roomsUnsubscribe) roomsUnsubscribe();
         roomsUnsubscribe = db.collection("customerRooms").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
             const rooms = [];
             snapshot.forEach(doc => rooms.push({ id: doc.id, ...doc.data() }));
+            showDebug(`加载到 ${rooms.length} 个房间`);
             renderRooms(rooms);
+        }, (error) => {
+            showDebug(`加载房间失败: ${error.message}`);
+            showMessage(`加载失败: ${error.message}`, true, 'mainMessageArea');
         });
     }
     
@@ -494,7 +448,7 @@
                     <div class="room-header">
                         <span class="client-name">👤 ${escapeHtml(room.clientName)}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="status-badge ${isOpen ? 'status-connected' : 'status-disconnected'}" style="font-size:0.7rem;">${isOpen ? '🟢 开启' : '🔴 关闭'}</span>
+                            <span style="font-size:0.7rem;padding:4px 10px;border-radius:20px;background:${isOpen?'#d1fae5':'#fee2e2'};color:${isOpen?'#065f46':'#991b1b'};">${isOpen ? '🟢 开启' : '🔴 关闭'}</span>
                             <div class="toggle-switch ${isOpen ? 'active' : ''}" onclick="window.toggleRoom('${room.roomId}', ${isOpen})"></div>
                         </div>
                     </div>
@@ -520,12 +474,18 @@
         const roomId = generateRoomId();
         const baseUrl = window.location.href.split('#')[0];
         const roomLink = baseUrl + '#' + roomId;
-        await db.collection("customerRooms").doc(roomId).set({
-            roomId, clientName, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            isOpen: false, creator: currentAdminId, roomLink
-        });
-        alert(`✅ 已为「${clientName}」创建房间！\n\n链接: ${roomLink}`);
-        document.getElementById('newClientName').value = '';
+        
+        try {
+            await db.collection("customerRooms").doc(roomId).set({
+                roomId, clientName, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                isOpen: false, creator: currentAdminId, roomLink
+            });
+            alert(`✅ 已为「${clientName}」创建房间！\n\n链接: ${roomLink}\n\n请将此链接发给客户`);
+            document.getElementById('newClientName').value = '';
+        } catch (error) {
+            alert(`创建失败: ${error.message}\n\n请检查 Firestore 权限是否为「测试模式」`);
+            showDebug(`创建房间失败: ${error.message}`);
+        }
     }
     
     async function deleteRoom(roomId, clientName) {
@@ -547,9 +507,18 @@
     
     async function adminLogin() {
         const password = document.getElementById('adminPassword').value;
-        if (!firebaseInitialized) { showMessage('请先配置 Firebase'); return; }
-        if (password !== ADMIN_PASSWORD) { showMessage('密码错误'); return; }
-        showMessage('✅ 登录成功', false);
+        
+        if (!firebaseInitialized) {
+            showMessage('请先配置并连接 Firebase（使用上方的粘贴功能）');
+            return;
+        }
+        
+        if (password !== ADMIN_PASSWORD) {
+            showMessage('密码错误（默认密码: admin123）');
+            return;
+        }
+        
+        showMessage('✅ 登录成功，正在加载管理后台...', false);
         showView('admin');
         await loadRooms();
     }
@@ -562,6 +531,21 @@
         if (match) roomId = match[0];
         if (!roomId || !roomId.startsWith('room_')) { showMessage('无效的链接格式'); return; }
         window.location.href = window.location.href.split('#')[0] + '#' + roomId;
+    }
+    
+    // 聊天室生成函数（简化版）
+    function generateChatPage(roomId, config) {
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>双语翻译客服</title><script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"><\/script><script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui;background:#f5f7fb;height:100vh;display:flex;flex-direction:column}.chat-header{background:linear-gradient(135deg,#667eea,#764ba2);padding:16px;color:white;display:flex;justify-content:space-between}.messages-area{flex:1;overflow-y:auto;padding:16px}.message{display:flex;margin-bottom:12px;max-width:80%}.message.sent{align-self:flex-end;justify-content:flex-end}.message.received{align-self:flex-start}.sent .bubble{background:#667eea;color:white;border-bottom-right-radius:4px}.received .bubble{background:white;border:1px solid #ddd;border-bottom-left-radius:4px}.bubble{padding:12px 16px;border-radius:20px}.sender-name{font-size:0.65rem;margin-bottom:4px}.main-text{font-size:1rem;font-weight:500}.translated-text{font-size:0.75rem;margin-top:6px;padding-top:4px;border-top:1px dashed #ccc}.input-area{background:white;padding:12px;display:flex;gap:8px}.input-wrapper{flex:1;display:flex;background:#f5f5f5;border-radius:30px;padding:4px 8px}#messageInput{flex:1;padding:10px;border:none;background:transparent;outline:none}.send-btn{background:#667eea;color:white;border:none;width:44px;border-radius:30px;cursor:pointer}</style></head><body><div class="chat-header"><div><strong>🌐 双语翻译客服</strong></div><div id="statusBadge">⏳ 连接中</div></div><div class="messages-area" id="messagesArea"><div style="text-align:center;color:#999;">连接中...</div></div><div class="input-area"><div class="input-wrapper"><input type="text" id="messageInput" placeholder="输入中文，自动翻译..." disabled><button id="sendBtn" class="send-btn" disabled>📤</button></div></div><script>
+const config=${JSON.stringify(config)};firebase.initializeApp(config);const db=firebase.firestore();const roomId="${roomId}";const userId="user_"+Date.now();let isOpen=false,unsub=null;
+async function translateText(t){if(!t.trim())return t;try{const r=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(t)+"&langpair=zh|es");const d=await r.json();let tr=d.responseData?.translatedText;return tr?tr.replace(/\\[[a-z]{2}\\]/gi,'').trim():t;}catch(e){return t;}}
+function addMessage(orig,trans,isMe,ts){const c=document.getElementById('messagesArea');if(c.children.length===1&&c.children[0].innerText.includes('连接中'))c.innerHTML='';const div=document.createElement('div');div.className='message '+(isMe?'sent':'received');div.innerHTML='<div class="bubble"><div class="sender-name">'+(isMe?'🇨🇳 你':'🇪🇸 客服')+'</div><div class="main-text">'+escapeHtml(orig)+'</div><div class="translated-text">'+(isMe?'📤 客服看到: ':'📖 中文翻译: ')+'<strong>'+escapeHtml(trans)+'</strong></div></div>';c.appendChild(div);c.scrollTop=c.scrollHeight;}
+function escapeHtml(s){return s.replace(/[&<>]/g,m=>m=='&'?'&amp;':m=='<'?'&lt;':'&gt;');}
+async function sendMsg(text){if(!isOpen){alert("客服暂未开启对话");return;}const trans=await translateText(text);await db.collection("customerRooms").doc(roomId).collection("messages").add({senderId:userId,originalText:text,translatedText:trans,timestamp:new Date()});}
+db.collection("customerRooms").doc(roomId).onSnapshot(d=>{if(d.exists){isOpen=d.data().isOpen||false;const btn=document.getElementById('sendBtn'),inp=document.getElementById('messageInput'),badge=document.getElementById('statusBadge');btn.disabled=!isOpen;inp.disabled=!isOpen;badge.innerText=isOpen?'🟢 对话已开启':'🔴 等待开启';}});
+db.collection("customerRooms").doc(roomId).collection("messages").orderBy("timestamp","asc").onSnapshot(s=>{s.docChanges().forEach(c=>{if(c.type==="added"&&c.doc.data().senderId){const d=c.doc.data();addMessage(d.originalText,d.translatedText,d.senderId===userId,d.timestamp);}});});
+document.getElementById('sendBtn').onclick=async()=>{const v=document.getElementById('messageInput').value.trim();if(v){await sendMsg(v);document.getElementById('messageInput').value='';}};
+document.getElementById('messageInput').onkeypress=e=>{if(e.key==='Enter')document.getElementById('sendBtn').click();};
+<\/script></body></html>`;
     }
     
     function checkUrlForRoom() {
@@ -580,43 +564,7 @@
         return false;
     }
     
-    function generateChatPage(roomId, config) {
-        return `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>双语翻译客服</title>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"><\/script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"><\/script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui;background:#f5f7fb;height:100vh;display:flex;flex-direction:column}.chat-header{background:linear-gradient(135deg,#667eea,#764ba2);padding:16px;color:white;display:flex;justify-content:space-between}.lang-bar{background:white;padding:8px 16px;display:flex;justify-content:space-between;font-size:0.7rem}.messages-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}.message{display:flex;max-width:85%}.message.sent{align-self:flex-end}.message.received{align-self:flex-start}.sent .bubble{background:#667eea;color:white;border-bottom-right-radius:4px}.received .bubble{background:white;border:1px solid #e5e5e5;border-bottom-left-radius:4px}.bubble{padding:14px 18px;border-radius:24px}.sender-name{font-size:0.65rem;margin-bottom:6px}.sent .sender-name{text-align:right}.received .sender-name{color:#f59e0b}.main-text{font-size:1.1rem;font-weight:500;margin-bottom:8px}.translated-text{font-size:0.85rem;padding-top:8px;margin-top:6px;border-top:1px dashed #ccc}.input-area{background:white;padding:12px 16px;display:flex;gap:10px}.input-wrapper{flex:1;display:flex;background:#f5f7fb;border-radius:30px;padding:4px 8px 4px 16px}#messageInput{flex:1;padding:12px 0;border:none;background:transparent;font-size:1rem;outline:none}.send-btn,.mic-btn,.tts-btn{width:44px;height:44px;border-radius:30px;border:none;font-size:1.2rem;cursor:pointer}.send-btn{background:#667eea;color:white}.mic-btn{background:#f0f0f0}.mic-btn.recording{background:#ff3b30;color:white}.system-message{text-align:center;font-size:0.7rem;color:#999}
-</style>
-</head>
-<body>
-<div class="chat-header"><div><strong>🌐 双语翻译客服</strong><div style="font-size:0.7rem;">中文 ↔ Español</div></div><div id="statusBadge" style="background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:30px;">⏳ 连接中</div></div>
-<div class="lang-bar"><span>🇨🇳 你说中文 → 客服看到 Español</span><span>🇪🇸 客服说 Español → 你看到 中文</span></div>
-<div class="messages-area" id="messagesArea"><div class="system-message">正在连接房间...</div></div>
-<div class="input-area"><div class="input-wrapper"><input type="text" id="messageInput" placeholder="输入中文，自动翻译..." disabled><button id="sendBtn" class="send-btn" disabled>📤</button></div><button id="voiceBtn" class="mic-btn" disabled>🎙️</button><button id="ttsBtn" class="tts-btn">🔊</button></div>
-<script>
-const config=${JSON.stringify(config)}; firebase.initializeApp(config); const db=firebase.firestore(); const roomId="${roomId}"; const userId="user_"+Date.now(); let isOpen=false,unsub=null;
-const translateApi="https://api.mymemory.translated.net/get";
-async function translate(t,s,target){if(!t.trim())return t;try{const r=await fetch(translateApi+"?q="+encodeURIComponent(t)+"&langpair="+s+"|"+target);const d=await r.json();let tr=d.responseData?.translatedText;return tr?tr.replace(/\\[[a-z]{2}\\]/gi,'').trim():t;}catch(e){return t;}}
-function addMsg(sender,orig,trans,isMe,ts){const c=document.getElementById('messagesArea');if(c.children.length===1&&c.children[0].innerText.includes('正在连接'))c.innerHTML='';const div=document.createElement('div');div.className='message '+(isMe?'sent':'received');const time=ts?new Date(ts.toDate()).toLocaleTimeString():new Date().toLocaleTimeString();if(isMe){div.innerHTML='<div class="bubble"><div class="sender-name">🇨🇳 你 (中文)</div><div class="main-text">'+escapeHtml(orig)+'</div><div class="translated-text">📤 客服看到:<br><strong>'+escapeHtml(trans)+'</strong></div><div class="timestamp">'+time+'</div></div>';}else{div.innerHTML='<div class="bubble"><div class="sender-name">🇪🇸 客服 (Español)</div><div class="main-text">'+escapeHtml(orig)+'</div><div class="translated-text">📖 中文翻译:<br><strong style="color:#f59e0b;font-size:1rem;">'+escapeHtml(trans)+'</strong></div><div class="timestamp">'+time+'</div></div>';}c.appendChild(div);c.scrollTop=c.scrollHeight;}
-function addSysMsg(msg,err){const c=document.getElementById('messagesArea');const d=document.createElement('div');d.className='system-message';d.style.color=err?'red':'#999';d.innerText=msg;c.appendChild(d);c.scrollTop=c.scrollHeight;}
-function escapeHtml(s){if(!s)return '';return s.replace(/[&<>]/g,m=>m=='&'?'&amp;':m=='<'?'&lt;':'&gt;');}
-async function sendMsg(text){if(!isOpen){addSysMsg("客服暂未开启对话",true);return;}if(!text.trim())return;const trans=await translate(text,"zh","es");await db.collection("customerRooms").doc(roomId).collection("messages").add({senderId:userId,originalText:text,translatedText:trans,timestamp:new Date()});}
-function listenMsgs(){if(unsub)unsub();unsub=db.collection("customerRooms").doc(roomId).collection("messages").orderBy("timestamp","asc").onSnapshot(s=>{s.docChanges().forEach(c=>{if(c.type==="added"&&c.doc.data().senderId){const d=c.doc.data();addMsg(d.senderId,d.originalText,d.translatedText,d.senderId===userId,d.timestamp);}});});}
-db.collection("customerRooms").doc(roomId).onSnapshot(d=>{if(d.exists){isOpen=d.data().isOpen||false;const send=document.getElementById('sendBtn'),inp=document.getElementById('messageInput'),voice=document.getElementById('voiceBtn'),badge=document.getElementById('statusBadge');if(isOpen){send.disabled=false;inp.disabled=false;voice.disabled=false;badge.innerText='🟢 对话已开启';addSysMsg("客服已开启对话");}else{send.disabled=true;inp.disabled=true;voice.disabled=true;badge.innerText='🔴 等待开启';}}else{addSysMsg("房间不存在",true);}});
-listenMsgs();
-document.getElementById('sendBtn').onclick=async()=>{const v=document.getElementById('messageInput').value.trim();if(v){await sendMsg(v);document.getElementById('messageInput').value='';}};
-document.getElementById('messageInput').onkeypress=e=>{if(e.key==='Enter')document.getElementById('sendBtn').click();};
-let recog=null,listening=false;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){recog=new SR();recog.lang='zh-CN';document.getElementById('voiceBtn').onclick=()=>{if(!isOpen){addSysMsg("客服未开启",true);return;}if(listening){recog.stop();}else{recog.start();listening=true;document.getElementById('voiceBtn').classList.add('recording');}};recog.onresult=async(e)=>{const txt=e.results[0][0].transcript;addSysMsg("🎤 识别: "+txt);await sendMsg(txt);document.getElementById('voiceBtn').classList.remove('recording');listening=false;};recog.onerror=()=>{document.getElementById('voiceBtn').classList.remove('recording');listening=false;};recog.onend=()=>{document.getElementById('voiceBtn').classList.remove('recording');listening=false;};}else{document.getElementById('voiceBtn').disabled=true;}
-let ttsOn=true;document.getElementById('ttsBtn').onclick=()=>{ttsOn=!ttsOn;document.getElementById('ttsBtn').innerText=ttsOn?'🔊':'🔇';if(!ttsOn)window.speechSynthesis.cancel();};
-<\/script>
-</body>
-</html>`;
-    }
-    
     // ==================== 事件绑定 ====================
-    document.getElementById('saveConfigBtn').onclick = saveConfigAndConnect;
     document.getElementById('adminLoginBtn').onclick = adminLogin;
     document.getElementById('clientJoinBtn').onclick = clientJoin;
     document.getElementById('backToMainBtn').onclick = () => showView('main');
@@ -629,7 +577,9 @@ let ttsOn=true;document.getElementById('ttsBtn').onclick=()=>{ttsOn=!ttsOn;docum
     window.deleteRoom = deleteRoom;
     window.copyRoomLink = copyRoomLink;
     window.parseAndFillConfig = parseAndFillConfig;
+    window.showHelp = showHelp;
     
+    // 启动
     loadSavedConfigAndConnect();
     if (!checkUrlForRoom()) {}
 </script>
