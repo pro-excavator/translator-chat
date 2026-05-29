@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>双语实时翻译 · 语音助手 | 分享链接即聊</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 1300px;
+            height: 90vh;
+            background-color: #f8fafc;
+            border-radius: 32px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .chat-header {
+            background: white;
+            padding: 14px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .title h1 {
+            font-size: 1.2rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .title p {
+            font-size: 0.65rem;
+            color: #475569;
+            margin-top: 2px;
+        }
+        .lang-badge {
+            display: flex;
+            gap: 12px;
+        }
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge.zh { background: #3b82f6; color: white; }
+        .badge.es { background: #f59e0b; color: white; }
+        .room-info {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .copy-btn {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        .copy-btn:hover { background: #2563eb; }
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #f1f5f9;
+        }
+        .message {
+            display: flex;
+            max-width: 80%;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.sent { align-self: flex-end; flex-direction: row-reverse; }
+        .message.received { align-self: flex-start; }
+        .bubble {
+            padding: 12px 18px;
+            border-radius: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .sent .bubble { background: #3b82f6; color: white; border-bottom-right-radius: 6px; }
+        .received .bubble { background: white; color: #1e293b; border-bottom-left-radius: 6px; border: 1px solid #e2e8f0; }
+        .sender-name { font-size: 0.7rem; margin-bottom: 5px; font-weight: 600; opacity: 0.85; }
+        .sent .sender-name { text-align: right; color: #dbeafe; }
+        .received .sender-name { color: #64748b; }
+        .message-text { word-wrap: break-word; font-size: 0.95rem; }
+        .translation-note {
+            font-size: 0.7rem;
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 1px dashed rgba(255,255,255,0.3);
+            opacity: 0.8;
+        }
+        .received .translation-note { border-top-color: #cbd5e1; color: #475569; }
+        .timestamp { font-size: 0.6rem; opacity: 0.6; margin-top: 6px; text-align: right; }
+        .input-area {
+            background: white;
+            padding: 16px 20px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .voice-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 60px;
+            flex-wrap: wrap;
+        }
+        .mic-button {
+            background: #3b82f6;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+        }
+        .mic-button.recording { background: #ef4444; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .send-button { background: #10b981; border: none; border-radius: 40px; padding: 10px 20px; color: white; font-weight: 600; cursor: pointer; }
+        .text-input-wrapper { display: flex; gap: 12px; align-items: flex-end; }
+        #messageInput {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid #cbd5e0;
+            border-radius: 28px;
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+        }
+        #messageInput:focus { border-color: #3b82f6; }
+        .status-badge { font-size: 0.7rem; color: #475569; background: #e2e8f0; padding: 4px 12px; border-radius: 24px; }
+        .tts-toggle { background: #e2e8f0; border: none; border-radius: 30px; padding: 5px 14px; cursor: pointer; }
+        .share-tip {
+            background: #dbeafe;
+            margin: 8px 20px 0;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #1e40af;
+            text-align: center;
+        }
+        @media (max-width: 640px) { .message { max-width: 95%; } .room-info { font-size: 0.6rem; padding: 4px 10px; } }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="title">
+            <h1>🌐 双语实时翻译 · 语音助手</h1>
+            <p>分享下方链接给对方 → 自动进入同一房间 | 中↔西语互译+语音朗读</p>
+        </div>
+        <div class="lang-badge">
+            <span class="badge zh">🇨🇳 你: 中文</span>
+            <span class="badge es">🇪🇸 客户: 西班牙语</span>
+        </div>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+        <div class="message received">
+            <div class="bubble">
+                <div class="sender-name">🤖 系统</div>
+                <div class="message-text">⏳ 正在连接房间...</div>
+                <div class="timestamp">刚刚</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="voice-controls">
+            <button id="voiceInputBtn" class="mic-button">🎙️ 语音输入 (说中文)</button>
+            <div class="status-badge" id="voiceStatus">⚡ 点击说话，自动翻译发送</div>
+            <button id="ttsToggleBtn" class="tts-toggle">🔊 朗读开启</button>
+        </div>
+        <div class="text-input-wrapper">
+            <textarea id="messageInput" rows="1" placeholder="✏️ 输入中文 (自动翻译为西班牙语发送给客户)..." style="resize: none;"></textarea>
+            <button id="sendBtn" class="send-button">📤 发送</button>
+        </div>
+        <div class="share-tip" id="shareTip">
+            🔗 当前房间: <strong id="roomIdDisplay">加载中...</strong>
+            <button id="copyRoomBtn" class="copy-btn" style="margin-left: 12px;">📋 复制邀请链接</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== 🔥 请在这里填入您的 Firebase 配置 ====================
+    const firebaseConfig = {
+        apiKey: "您的API_KEY",
+        authDomain: "您的项目ID.firebaseapp.com",
+        projectId: "您的项目ID",
+        storageBucket: "您的项目ID.appspot.com",
+        messagingSenderId: "您的发送者ID",
+        appId: "您的APP_ID"
+    };
+    // ====================================================================
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    let currentRoom = null;
+    let unsubscribe = null;
+    let currentUserId = "user_" + Math.random().toString(36).substr(2, 10);
+    
+    // DOM 元素
+    const messagesContainer = document.getElementById('messagesArea');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const voiceInputBtn = document.getElementById('voiceInputBtn');
+    const voiceStatusSpan = document.getElementById('voiceStatus');
+    const ttsToggleBtn = document.getElementById('ttsToggleBtn');
+    const roomIdDisplay = document.getElementById('roomIdDisplay');
+    const copyRoomBtn = document.getElementById('copyRoomBtn');
+    
+    // 朗读开关
+    let ttsEnabled = true;
+    let speechSupported = 'speechSynthesis' in window;
+    
+    // ==================== 翻译 API ====================
+    const MY_MEMORY_API = "https://api.mymemory.translated.net/get";
+    
+    async function translateText(text, sourceLang, targetLang) {
+        if (!text.trim()) return "";
+        const url = `${MY_MEMORY_API}?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.ok) {
+                const data = await response.json();
+                let translated = data.responseData?.translatedText;
+                if (translated) return translated.replace(/\[[a-z]{2}\]/gi, '').trim();
+            }
+            throw new Error("API fallback");
+        } catch (error) {
+            return localFallback(text, sourceLang, targetLang);
+        }
+    }
+    
+    function localFallback(text, sourceLang, targetLang) {
+        if (sourceLang === "zh" && targetLang === "es") {
+            const dict = { "你好":"Hola","谢谢":"Gracias","再见":"Adiós","价格":"precio","多少":"cuánto","帮助":"ayuda","客户":"cliente" };
+            let result = text;
+            for (let [cn, es] of Object.entries(dict)) result = result.replace(new RegExp(cn, 'g'), es);
+            return result === text ? `[ES] ${text}` : result;
+        } else if (sourceLang === "es" && targetLang === "zh") {
+            const dict = { "Hola":"你好","Gracias":"谢谢","Adiós":"再见","precio":"价格","cuánto":"多少","ayuda":"帮助","cliente":"客户" };
+            let result = text;
+            for (let [es, cn] of Object.entries(dict)) result = result.replace(new RegExp(es, 'gi'), cn);
+            return result === text ? `[中文] ${text}` : result;
+        }
+        return text;
+    }
+    
+    function speakMessage(text, lang) {
+        if (!ttsEnabled || !speechSupported || !text) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function addMessageToUI(senderId, displayName, originalText, translatedText, isFromMe, timestamp) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isFromMe ? 'sent' : 'received'}`;
+        const timeStr = timestamp && timestamp.toDate ? new Date(timestamp.toDate()).toLocaleTimeString() : new Date().toLocaleTimeString();
+        
+        if (isFromMe) {
+            messageDiv.innerHTML = `
+                <div class="bubble">
+                    <div class="sender-name">🧑 我 (中文)</div>
+                    <div class="message-text">${escapeHtml(originalText)}</div>
+                    <div class="translation-note">🗣️ 客户看到: ${escapeHtml(translatedText)}</div>
+                    <div class="timestamp">${timeStr}</div>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="bubble">
+                    <div class="sender-name">🇪🇸 客户 (${displayName})</div>
+                    <div class="message-text">${escapeHtml(originalText)}</div>
+                    <div class="translation-note">📖 中文翻译: ${escapeHtml(translatedText)}</div>
+                    <div class="timestamp">${timeStr}</div>
+                </div>
+            `;
+        }
+        messagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+        
+        if (!isFromMe && ttsEnabled && translatedText) {
+            speakMessage(translatedText, 'zh-CN');
+        }
+    }
+    
+    function addSystemMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message received';
+        messageDiv.innerHTML = `
+            <div class="bubble">
+                <div class="sender-name">🤖 系统</div>
+                <div class="message-text">${escapeHtml(text)}</div>
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+            </div>
+        `;
+        messagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // 发送消息
+    async function sendMessage(chineseText) {
+        if (!chineseText.trim()) return;
+        const spanishTrans = await translateText(chineseText, "zh", "es");
+        
+        await db.collection("rooms").doc(currentRoom).collection("messages").add({
+            senderId: currentUserId,
+            originalText: chineseText,
+            translatedText: spanishTrans,
+            sourceLang: "zh",
+            targetLang: "es",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        if (ttsEnabled && spanishTrans) speakMessage(spanishTrans, 'es-ES');
+    }
+    
+    // 监听消息
+    function listenMessages(roomId) {
+        if (unsubscribe) unsubscribe();
+        const messagesRef = db.collection("rooms").doc(roomId).collection("messages");
+        unsubscribe = messagesRef.orderBy("timestamp", "asc").limit(100).onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const data = change.doc.data();
+                    const isFromMe = data.senderId === currentUserId;
+                    addMessageToUI(
+                        data.senderId,
+                        data.senderId === currentUserId ? "我" : "对方",
+                        data.originalText,
+                        data.translatedText,
+                        isFromMe,
+                        data.timestamp
+                    );
+                }
+            });
+        }, (error) => {
+            console.error("监听错误:", error);
+            addSystemMessage("⚠️ 连接错误，请刷新页面重试");
+        });
+    }
+    
+    // 加入房间
+    async function joinRoom(roomId) {
+        currentRoom = roomId;
+        messagesContainer.innerHTML = '';
+        addSystemMessage(`🚪 正在进入房间: ${roomId} ...`);
+        listenMessages(roomId);
+        setTimeout(() => {
+            addSystemMessage(`✅ 已加入房间「${roomId}」\n💡 分享当前链接给对方，即可开始实时翻译对话！`);
+        }, 500);
+    }
+    
+    // ==================== 房间号自动生成（基于 URL Hash） ====================
+    function initRoomFromUrl() {
+        let roomId = window.location.hash.substring(1);
+        if (!roomId || roomId.length < 3) {
+            roomId = Math.random().toString(36).substring(2, 10);
+            window.location.hash = roomId;
+        }
+        return roomId;
+    }
+    
+    function updateRoomUI(roomId) {
+        roomIdDisplay.innerText = roomId;
+    }
+    
+    function getCurrentFullUrl() {
+        return window.location.href.split('#')[0] + '#' + currentRoom;
+    }
+    
+    copyRoomBtn.addEventListener('click', () => {
+        const url = getCurrentFullUrl();
+        navigator.clipboard.writeText(url).then(() => {
+            const originalText = copyRoomBtn.innerText;
+            copyRoomBtn.innerText = '✅ 已复制！';
+            setTimeout(() => { copyRoomBtn.innerText = originalText; }, 2000);
+        }).catch(() => {
+            alert('手动复制链接: ' + url);
+        });
+    });
+    
+    // 启动应用
+    const autoRoom = initRoomFromUrl();
+    updateRoomUI(autoRoom);
+    joinRoom(autoRoom);
+    
+    // ==================== 事件绑定 ====================
+    sendBtn.addEventListener('click', async () => {
+        const raw = messageInput.value.trim();
+        if (!raw) return;
+        await sendMessage(raw);
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+    });
+    
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendBtn.click();
+        }
+    });
+    
+    // 语音识别
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+    
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'zh-CN';
+        recognition.continuous = false;
+    } else {
+        voiceStatusSpan.innerText = "⚠️ 不支持语音识别";
+        voiceInputBtn.disabled = true;
+    }
+    
+    voiceInputBtn.addEventListener('click', () => {
+        if (!recognition) return;
+        if (isListening) { recognition.stop(); return; }
+        recognition.lang = 'zh-CN';
+        voiceStatusSpan.innerHTML = "🎙️ 请说中文...";
+        voiceInputBtn.classList.add('recording');
+        recognition.start();
+        isListening = true;
+    });
+    
+    if (recognition) {
+        recognition.onresult = async (event) => {
+            const spokenText = event.results[0][0].transcript;
+            voiceStatusSpan.innerHTML = `✅ 识别: "${spokenText}" → 发送中`;
+            await sendMessage(spokenText);
+            voiceStatusSpan.innerHTML = "⚡ 点击说话，自动翻译发送";
+            voiceInputBtn.classList.remove('recording');
+            isListening = false;
+        };
+        recognition.onerror = () => {
+            voiceStatusSpan.innerHTML = "❌ 识别失败，重试";
+            voiceInputBtn.classList.remove('recording');
+            isListening = false;
+        };
+        recognition.onend = () => {
+            if (isListening) {
+                voiceInputBtn.classList.remove('recording');
+                isListening = false;
+            }
+        };
+    }
+    
+    ttsToggleBtn.addEventListener('click', () => {
+        ttsEnabled = !ttsEnabled;
+        ttsToggleBtn.innerText = ttsEnabled ? "🔊 朗读开启" : "🔇 朗读关闭";
+        if (!ttsEnabled && speechSupported) window.speechSynthesis.cancel();
+    });
+    
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+</script>
+</body>
+</html>
