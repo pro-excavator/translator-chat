@@ -4,12 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>拜访助手 · 话术 & 翻译</title>
-
-<!-- Firebase 最先加载 -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-<!-- Firebase 立即初始化，不等任何用户操作 -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 <script>
 const FB_CONFIG = {
   apiKey: "AIzaSyA8LLIU_vxZ2AS14MDAvGzQRViJ3R--FXY",
@@ -21,23 +18,23 @@ const FB_CONFIG = {
 };
 firebase.initializeApp(FB_CONFIG);
 const db = firebase.firestore();
+const storage = firebase.storage();
 </script>
-
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --brand:#1a1a2e; --accent:#4f8ef7; --green:#22c27a; --wa:#25D366;
-  --surface:#f7f8fc; --card:#fff; --border:rgba(0,0,0,.08);
-  --text:#111827; --muted:#6b7280; --r:18px; --rs:10px;
-  --bubble-admin:#4f8ef7; --bubble-client:#22c27a;
+  --brand:#1a1a2e;--accent:#4f8ef7;--green:#22c27a;--wa:#25D366;
+  --surface:#f7f8fc;--card:#fff;--border:rgba(0,0,0,.08);
+  --text:#111827;--muted:#6b7280;--r:18px;--rs:10px;
+  --bubble-admin:#4f8ef7;--bubble-client:#22c27a;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--surface);color:var(--text);min-height:100vh}
 
 /* NAV */
-.tabs{display:flex;background:var(--brand);padding:0 8px;position:sticky;top:0;z-index:100}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 4px 9px;color:rgba(255,255,255,.4);font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
-.tab svg{width:22px;height:22px}
+.tabs{display:flex;background:var(--brand);padding:0 4px;position:sticky;top:0;z-index:100}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 2px 8px;color:rgba(255,255,255,.4);font-size:10px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.tab svg{width:21px;height:21px}
 .tab.active{color:#fff;border-color:var(--accent)}
 
 /* PAGES */
@@ -46,7 +43,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--surface);color:
 
 /* CARDS */
 .card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:12px}
-.card-title{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
 /* FORM */
 input,textarea,select{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--rs);font-family:inherit;font-size:15px;background:var(--surface);color:var(--text);outline:none;transition:.15s}
@@ -64,8 +61,8 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 .btn-ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
 .btn-red{background:#fee2e2;color:#991b1b}
 .btn-sm{padding:8px 15px;font-size:13px;width:auto;border-radius:20px}
-.btn-row{display:flex;gap:8px}
-.btn-row .btn{flex:1}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:80px}
 
 /* TEMPLATE GRID */
 .tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -88,14 +85,26 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 .zh-ref{background:#eef4ff;border:1px dashed var(--accent);border-radius:10px;padding:10px;margin-top:10px;font-size:12px;color:#1d4ed8;line-height:1.6;white-space:pre-wrap}
 .zh-ref-label{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:3px}
 
-/* LANG SWITCH */
-.lang-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.lang-badge{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 13px;font-size:13px;font-weight:600}
+/* LANG ROW — 支持多语言选择 */
+.lang-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.lang-badge{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.lang-badge:hover{border-color:var(--accent)}
+.lang-select{flex:1;min-width:100px;padding:6px 10px;font-size:13px;border-radius:20px}
 .swap-btn{background:var(--card);border:1px solid var(--border);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 
 /* TRANS OUTPUT */
 .trans-out{background:var(--surface);border-radius:var(--rs);border:1px solid var(--border);padding:13px;min-height:70px;font-size:15px;line-height:1.7}
 .trans-actions{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+
+/* PHRASES */
+.phrases-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.phrase-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;transition:.15s;position:relative}
+.phrase-card:hover{border-color:var(--accent);background:#eef4ff}
+.phrase-zh{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.phrase-es{font-size:11px;color:var(--muted)}
+.phrase-del{position:absolute;top:5px;right:5px;display:none;background:none;border:none;color:#dc2626;font-size:12px;cursor:pointer;padding:2px}
+.phrase-card:hover .phrase-del{display:block}
+.phrase-speak{font-size:10px;opacity:.5;margin-left:3px;cursor:pointer}
 
 /* ROOMS */
 .room-item{background:var(--surface);border-radius:14px;padding:13px;margin-bottom:8px;border:1px solid var(--border)}
@@ -114,50 +123,54 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 
 /* CHAT */
 .msg-list{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px}
-.msg{max-width:80%}
+.msg{max-width:82%}
 .msg.me{align-self:flex-end}
 .msg.them{align-self:flex-start}
-/* 管理员=蓝(右) 客户=绿(左) */
 .me .bubble{background:var(--bubble-admin);color:#fff;border-radius:18px 18px 4px 18px}
 .them .bubble{background:var(--bubble-client);color:#fff;border-radius:18px 18px 18px 4px}
 .bubble{padding:10px 13px;font-size:14px;line-height:1.6}
 .b-sender{font-size:10px;opacity:.75;margin-bottom:3px;font-weight:600}
-.b-text{font-size:14px}
-.b-trans{font-size:12px;margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.4);opacity:.9;font-style:italic}
+.b-text{font-size:14px;cursor:pointer}
+.b-trans{font-size:12px;margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.4);opacity:.9;font-style:italic;cursor:pointer}
 .b-time{font-size:10px;opacity:.5;margin-top:3px;text-align:right}
+.b-img{max-width:100%;border-radius:10px;margin-top:6px;cursor:pointer}
 .sys-msg{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
 
 /* CHAT LAYOUT */
 .chat-wrap{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto}
-.chat-hdr{background:var(--brand);color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.chat-hdr{background:var(--brand);color:#fff;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .chat-hdr-close{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px}
+.chat-hdr-right{display:flex;gap:8px;align-items:center}
+.export-btn{background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.8);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:500}
 
-/* ADMIN INPUT (with live ZH preview) */
+/* ADMIN INPUT */
 .admin-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0}
 .admin-preview{font-size:12px;color:var(--muted);background:#eef4ff;border-radius:8px;padding:6px 10px;margin-bottom:6px;display:none;line-height:1.5}
 .admin-preview-lbl{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:2px}
-.admin-input-row{display:flex;gap:7px}
-.admin-input-row input{border-radius:30px;flex:1}
+.admin-input-row{display:flex;gap:6px;align-items:center}
+.admin-input-row input{border-radius:30px;flex:1;min-width:0}
 
 /* CLIENT INPUT */
-.client-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0}
-.client-input-wrap input{border-radius:30px;flex:1}
+.client-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-shrink:0}
+.client-input-wrap input{border-radius:30px;flex:1;min-width:0}
 
-/* SEND/MIC BUTTONS */
-.icon-btn{border:none;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
+/* MIC & SEND */
+.icon-btn{border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
 .send-btn{background:var(--accent);color:#fff}
-.mic-btn{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
-.mic-btn.rec{background:#fee2e2;color:#dc2626;border-color:#fca5a5;animation:pulse 1s ease-in-out infinite}
-.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
-.mic-lang-btn{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--accent);cursor:pointer;white-space:nowrap;line-height:1.4}
-.dual-mic{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.dual-mic-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:.15s}
+.img-btn{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.dual-mic{display:flex;gap:4px;flex-shrink:0}
+.dual-mic-btn{display:flex;align-items:center;gap:4px;padding:6px 9px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:.15s}
 .dual-mic-btn:hover{border-color:var(--accent);background:#eef4ff}
 .dual-mic-btn.rec{background:#fee2e2;color:#dc2626;border-color:#fca5a5;animation:pulse 1s ease-in-out infinite}
-.dual-mic-btn svg{flex-shrink:0}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
 
-/* FULLSCREEN OVERLAYS */
+/* IMAGE UPLOAD PREVIEW */
+.img-preview-wrap{display:flex;gap:8px;align-items:center;background:var(--surface);border-radius:10px;padding:8px 10px;margin-bottom:6px}
+.img-preview-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover}
+.img-preview-name{font-size:12px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.img-preview-del{background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;flex-shrink:0}
+
+/* FULLSCREEN */
 .overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--surface)}
 .overlay.show{display:flex;flex-direction:column}
 
@@ -180,11 +193,17 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 /* UTILS */
 .empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
 .mt8{margin-top:8px}.mt12{margin-top:12px}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;align-items:center;justify-content:center}
+.lightbox.show{display:flex}
+.lightbox img{max-width:95vw;max-height:95vh;border-radius:12px;object-fit:contain}
+.lightbox-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
 
-<!-- ══ NAV ══ -->
+<!-- NAV -->
 <nav class="tabs" id="nav">
   <div class="tab active" data-p="wa" onclick="goPage('wa')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l1.5-5.5A8.5 8.5 0 1 1 9 18.5L3 20z"/></svg>话术
@@ -209,12 +228,10 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
     </div>
     <div class="tpl-grid" id="tplGrid"></div>
   </div>
-
   <div class="card" id="tplEditor" style="display:none">
     <div class="card-title">✏️ 填写内容</div>
     <div id="tplFields"></div>
   </div>
-
   <div class="card" id="tplPreview" style="display:none">
     <div class="card-title">👁️ 预览 & 发送</div>
     <div class="wa-mock">
@@ -248,23 +265,38 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 <!-- ══ PAGE: 翻译 ══ -->
 <div id="page-tr" class="page">
   <div class="card">
+    <!-- 多语言选择 -->
     <div class="lang-row">
-      <div class="lang-badge" id="srcLang">🇨🇳 中文</div>
+      <select id="srcLangSel" class="lang-select" onchange="onLangChange()">
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="pt">🇧🇷 Português</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="ar">🇸🇦 العربية</option>
+      </select>
       <div class="swap-btn" onclick="swapLang()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
       </div>
-      <div class="lang-badge" id="tgtLang">🇪🇸 Español</div>
+      <select id="tgtLangSel" class="lang-select" onchange="onLangChange()">
+        <option value="es">🇪🇸 Español</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="pt">🇧🇷 Português</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="ar">🇸🇦 العربية</option>
+      </select>
     </div>
     <div class="field" style="display:flex;gap:8px;align-items:flex-start">
       <textarea id="srcText" placeholder="输入或语音输入..." rows="4" oninput="onSrcInput()" style="flex:1"></textarea>
       <div class="dual-mic">
-        <button class="dual-mic-btn" id="trMicZH" onclick="startVoice('tr','zh-CN','trMicZH')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          🇨🇳 中文
+        <button class="dual-mic-btn" id="trMicSrc" onclick="startVoice('tr', getSrcLang(), 'trMicSrc')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          <span id="trMicSrcLabel">🇨🇳</span>
         </button>
-        <button class="dual-mic-btn" id="trMicES" onclick="startVoice('tr','es-ES','trMicES')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          🇪🇸 Español
+        <button class="dual-mic-btn" id="trMicTgt" onclick="startVoice('tr', getTgtLang(), 'trMicTgt')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          <span id="trMicTgtLabel">🇪🇸</span>
         </button>
       </div>
     </div>
@@ -277,15 +309,20 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
       <div class="trans-out" id="trOut"></div>
       <div class="trans-actions">
         <button class="btn btn-ghost btn-sm" onclick="copyTrans()">📋 复制</button>
-        <button class="btn btn-ghost btn-sm" onclick="speak(document.getElementById('trOut').textContent)">🔊 朗读</button>
+        <button class="btn btn-ghost btn-sm" onclick="speak(document.getElementById('trOut').textContent, getTgtLang())">🔊 朗读</button>
         <button class="btn btn-wa btn-sm" onclick="sendTransWa()">WhatsApp</button>
         <button class="btn btn-ghost btn-sm" onclick="sendToChat()">💬 发到聊天</button>
       </div>
     </div>
   </div>
+
+  <!-- 快速短语 -->
   <div class="card">
-    <div class="card-title">⚡ 快速短语</div>
-    <div id="phrases" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+    <div class="card-title" style="justify-content:space-between">
+      ⚡ 快速短语
+      <button class="btn btn-ghost btn-sm" onclick="openAddPhrase()" style="margin-left:auto">＋ 添加</button>
+    </div>
+    <div class="phrases-grid" id="phrases"></div>
   </div>
 </div>
 
@@ -308,24 +345,19 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 <!-- ══ PAGE: 设置 ══ -->
 <div id="page-cfg" class="page">
   <div class="card">
-    <div class="card-title">
-      🔥 Firebase 状态
-      <span class="dot dot-ok" id="fbDot">✅ 已连接</span>
-    </div>
-    <p style="font-size:13px;color:var(--muted)">Firebase 配置已内置，无需手动配置。任何设备打开都可直接使用。</p>
+    <div class="card-title">🔥 Firebase <span class="dot dot-ok">✅ 已连接</span></div>
+    <p style="font-size:13px;color:var(--muted)">配置已内置，任何设备打开均可直接使用。</p>
   </div>
-
   <div class="card">
-    <div class="card-title">🔗 进入聊天室（客户端）</div>
+    <div class="card-title">🔗 客户端入口</div>
     <div class="field">
       <label>粘贴客服发送的链接</label>
       <input id="clientLink" placeholder="https://pro-excavator.github.io/...#room_xxx">
     </div>
     <button class="btn btn-green" onclick="goClientChat()">💬 进入聊天室</button>
   </div>
-
   <div class="card">
-    <div class="card-title">📝 自定义话术</div>
+    <div class="card-title">📝 自定义话术模板</div>
     <div id="customList"></div>
     <button class="btn btn-ghost mt8" onclick="openAddTpl()">＋ 添加模板</button>
   </div>
@@ -337,26 +369,40 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
     <div class="chat-hdr">
       <div>
         <div style="font-weight:600" id="adminChatTitle">客户聊天</div>
-        <div style="font-size:11px;opacity:.7">🔵你(ES) · 🟢客户(ZH)</div>
+        <div style="font-size:11px;opacity:.7">🔵你 · 🟢客户</div>
       </div>
-      <button class="chat-hdr-close" onclick="closeAdminChat()">✕ 关闭</button>
+      <div class="chat-hdr-right">
+        <button class="export-btn" onclick="exportChat('admin')">📤 导出</button>
+        <button class="chat-hdr-close" onclick="closeAdminChat()">✕</button>
+      </div>
     </div>
     <div class="msg-list" id="adminMsgs"></div>
     <div class="admin-input-wrap">
       <div class="admin-preview" id="adminPrev">
-        <div class="admin-preview-lbl">📖 客户将看到的中文</div>
+        <div class="admin-preview-lbl">📖 客户将看到的翻译</div>
         <div id="adminPrevText"></div>
       </div>
+      <!-- 图片预览 -->
+      <div id="adminImgPreview" style="display:none" class="img-preview-wrap">
+        <img id="adminImgThumb" class="img-preview-thumb">
+        <span id="adminImgName" class="img-preview-name"></span>
+        <button class="img-preview-del" onclick="clearAdminImg()">✕</button>
+      </div>
       <div class="admin-input-row">
-        <input id="adminIn" placeholder="输入西班牙语..." oninput="onAdminIn()" onkeypress="if(event.key==='Enter')sendAdmin()">
-        <button class="dual-mic-btn" id="adminMicZH" onclick="startVoice('admin','zh-CN','adminMicZH')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          🇨🇳
+        <input id="adminIn" placeholder="输入任意语言..." oninput="onAdminIn()" onkeypress="if(event.key==='Enter')sendAdmin()">
+        <!-- 图片发送 -->
+        <button class="icon-btn img-btn" onclick="document.getElementById('adminImgInput').click()" title="发送图片">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
         </button>
-        <button class="dual-mic-btn" id="adminMicES" onclick="startVoice('admin','es-ES','adminMicES')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          🇪🇸
-        </button>
+        <input type="file" id="adminImgInput" accept="image/*" style="display:none" onchange="onAdminImgPick(this)">
+        <div class="dual-mic">
+          <button class="dual-mic-btn" id="adminMicZH" onclick="startVoice('admin','zh-CN','adminMicZH')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>🇨🇳
+          </button>
+          <button class="dual-mic-btn" id="adminMicES" onclick="startVoice('admin','es-ES','adminMicES')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>🇪🇸
+          </button>
+        </div>
         <button class="icon-btn send-btn" onclick="sendAdmin()">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>
         </button>
@@ -371,24 +417,30 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
     <div class="chat-hdr">
       <div>
         <div style="font-weight:600">🌐 双语翻译客服</div>
-        <div style="font-size:11px;opacity:.7">🟢你(ZH) · 🔵客服(ES)</div>
+        <div style="font-size:11px;opacity:.7">🟢你 · 🔵客服</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div class="chat-hdr-right">
         <div id="clientStatus" style="font-size:12px;background:rgba(255,255,255,.15);padding:4px 11px;border-radius:20px">⏳ 连接中</div>
+        <button class="export-btn" onclick="exportChat('client')">📤 导出</button>
         <button class="chat-hdr-close" onclick="closeClientChat()">✕</button>
       </div>
     </div>
     <div class="msg-list" id="clientMsgs"></div>
     <div class="client-input-wrap">
-      <input id="clientIn" placeholder="输入中文，自动翻译给客服..." disabled onkeypress="if(event.key==='Enter')sendClient()">
-      <button class="dual-mic-btn" id="clientMicZH" onclick="startVoice('client','zh-CN','clientMicZH')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          🇨🇳
+      <input id="clientIn" placeholder="输入文字，自动翻译..." disabled onkeypress="if(event.key==='Enter')sendClient()">
+      <!-- 图片发送 -->
+      <button class="icon-btn img-btn" onclick="document.getElementById('clientImgInput').click()" title="发送图片">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+      </button>
+      <input type="file" id="clientImgInput" accept="image/*" style="display:none" onchange="sendClientImg(this)">
+      <div class="dual-mic">
+        <button class="dual-mic-btn" id="clientMicZH" onclick="startVoice('client','zh-CN','clientMicZH')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>🇨🇳
         </button>
         <button class="dual-mic-btn" id="clientMicES" onclick="startVoice('client','es-ES','clientMicES')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          🇪🇸
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>🇪🇸
         </button>
+      </div>
       <button class="icon-btn send-btn" id="clientSend" disabled onclick="sendClient()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>
       </button>
@@ -399,18 +451,13 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 <!-- ══ 模板编辑弹窗 ══ -->
 <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <div class="modal-hdr">
-      <span id="modalTitle">编辑模板</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
+    <div class="modal-hdr"><span id="modalTitle">编辑模板</span><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="field"><label>名称</label><input id="mName"></div>
     <div class="field"><label>图标</label><input id="mIcon" style="max-width:80px"></div>
     <div class="field"><label>中文内容（{name} 等占位符）</label><textarea id="mZh" rows="5"></textarea></div>
     <div class="field"><label>西班牙语内容</label><textarea id="mEs" rows="5"></textarea></div>
-    <div class="field">
-      <label>变量（每行：key|标签|示例）</label>
-      <textarea id="mFields" rows="4" placeholder="name|客户姓名|Sr. García&#10;product|产品名|XX系列"></textarea>
-    </div>
+    <div class="field"><label>变量（每行：key|标签|示例）</label>
+      <textarea id="mFields" rows="4" placeholder="name|客户姓名|Sr. García&#10;product|产品名|XX系列"></textarea></div>
     <div class="btn-row mt12">
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       <button class="btn btn-blue" onclick="saveModal()">✅ 保存</button>
@@ -418,66 +465,58 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
   </div>
 </div>
 
+<!-- ══ 添加短语弹窗 ══ -->
+<div id="phraseModalBg" class="modal-bg" onclick="if(event.target===this)closePhraseModal()">
+  <div class="modal">
+    <div class="modal-hdr"><span>添加快速短语</span><button class="modal-close" onclick="closePhraseModal()">✕</button></div>
+    <div class="field"><label>中文</label><input id="pZh" placeholder="你好，有什么需要？"></div>
+    <div class="field"><label>西班牙语</label><input id="pEs" placeholder="Hola, ¿en qué le puedo ayudar?"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">其他语言翻译会自动生成</p>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closePhraseModal()">取消</button>
+      <button class="btn btn-blue" onclick="savePhrase()">✅ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 图片查看器 -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg">
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════
-//  CONSTANTS & STATE
-// ══════════════════════════════════════
+// ══ CONSTANTS ══
 const CHAT_URL = 'https://pro-excavator.github.io/translator-chat/index.html';
 const clientId = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
 
-let langPair = { src:'zh', tgt:'es', srcL:'🇨🇳 中文', tgtL:'🇪🇸 Español' };
+// 语言配置
+const LANGS = {
+  zh: { name:'中文', flag:'🇨🇳', voice:'zh-CN' },
+  es: { name:'Español', flag:'🇪🇸', voice:'es-ES' },
+  en: { name:'English', flag:'🇬🇧', voice:'en-US' },
+  pt: { name:'Português', flag:'🇧🇷', voice:'pt-BR' },
+  fr: { name:'Français', flag:'🇫🇷', voice:'fr-FR' },
+  ar: { name:'العربية', flag:'🇸🇦', voice:'ar-SA' },
+};
+
+let srcCode = 'zh', tgtCode = 'es';
 let selectedTpl = null, transText = '';
 let adminRoomId = null, adminMsgUnsub = null;
 let clientRoomId = null, clientMsgUnsub = null, clientRoomUnsub = null;
-let roomsUnsub = null;
-let editingId = null;
+let roomsUnsub = null, editingId = null;
+let adminImgFile = null;
+let chatLog = { admin:[], client:[] }; // 用于导出
 
-// ══════════════════════════════════════
-//  BUILT-IN TEMPLATES
-// ══════════════════════════════════════
-let BUILTIN = [
-  { id:'intro', icon:'👋', name:'初次拜访', desc:'自我介绍',
-    langs:{ zh:'您好 {name}！我是 {myName}，来自 {company}。\n\n很高兴认识您！我们专注于 {product}，希望为您提供帮助。\n\n方便安排一次沟通吗？',
-            es:'¡Hola {name}! Soy {myName} de {company}.\n\n¡Encantado de conocerle! Nos especializamos en {product} y me gustaría apoyar su negocio.\n\n¿Podríamos coordinar una reunión?' },
-    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'myName',l:'我的姓名',p:'李明'},{k:'company',l:'公司',p:'XX贸易'},{k:'product',l:'产品/服务',p:'进出口'}] },
+// 语音
+let vRec = null, vTarget = null, vBtnId = null, vActive = false;
 
-  { id:'followup', icon:'📞', name:'跟进回访', desc:'拜访后跟进',
-    langs:{ zh:'您好 {name}！\n\n感谢今天的会面。\n\n我们的 {product} 可以帮您 {benefit}。\n\n期待您的回复！',
-            es:'¡Hola {name}!\n\nGracias por su tiempo hoy.\n\nNuestro {product} puede ayudarle a {benefit}.\n\n¡Espero su respuesta!' },
-    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'product',l:'产品',p:'XX系列'},{k:'benefit',l:'价值',p:'节省30%成本'}] },
-
-  { id:'quote', icon:'💰', name:'发送报价', desc:'报价单',
-    langs:{ zh:'您好 {name}！\n\n为您整理报价：\n\n📦 产品：{product}\n💵 价格：{price}\n📅 有效期：{valid}\n\n如有疑问请联系我！',
-            es:'¡Hola {name}!\n\nAquí tiene nuestra cotización:\n\n📦 Producto: {product}\n💵 Precio: {price}\n📅 Válido hasta: {valid}\n\n¡Con gusto le atiendo!' },
-    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'product',l:'产品',p:'XX系列'},{k:'price',l:'报价',p:'USD 500/件'},{k:'valid',l:'有效期',p:'2024-12-31'}] },
-
-  { id:'appt', icon:'📅', name:'预约拜访', desc:'确认时间',
-    langs:{ zh:'您好 {name}！\n\n希望 {date} {time} 拜访您，地点：{place}。\n\n我会带上 {material}。\n\n时间方便吗？',
-            es:'¡Hola {name}!\n\nMe gustaría visitarle el {date} a las {time} en {place}.\n\nLlevaré {material}.\n\n¿Le viene bien?' },
-    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'date',l:'日期',p:'15 dic'},{k:'time',l:'时间',p:'10:00am'},{k:'place',l:'地点',p:'Su oficina'},{k:'material',l:'携带资料',p:'muestras'}] },
-
-  { id:'thanks', icon:'🙏', name:'感谢合作', desc:'成交致谢',
-    langs:{ zh:'您好 {name}！\n\n非常感谢您的合作！\n\n订单 {order} 已确认，{date} 前完成 {action}。\n\n随时为您服务！',
-            es:'¡Hola {name}!\n\n¡Gracias por trabajar con nosotros!\n\nSu pedido {order} está confirmado. Completaremos {action} antes del {date}.\n\n¡A su disposición!' },
-    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'order',l:'订单',p:'#001'},{k:'date',l:'日期',p:'20 dic'},{k:'action',l:'行动',p:'envío'}] },
-
-  { id:'free', icon:'✏️', name:'自定义', desc:'自由编写', langs:{zh:'',es:''}, fields:[] }
-];
-
-const PHRASES = [
-  {zh:'我马上到',es:'Ya voy en camino'},{zh:'等一下',es:'Un momento, por favor'},
-  {zh:'多少钱？',es:'¿Cuánto cuesta?'},{zh:'能打折吗？',es:'¿Me puede dar un descuento?'},
-  {zh:'太贵了',es:'Es muy caro'},{zh:'好的，同意',es:'Sí, de acuerdo'},
-  {zh:'明天联系',es:'Le contacto mañana'},{zh:'我们质量有保证',es:'Garantizamos la calidad'},
-];
-
-// ══════════════════════════════════════
-//  UTILS
-// ══════════════════════════════════════
-const esc = s => s ? s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : '';
+// ══ UTILS ══
+const esc = s => s ? s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : '';
 const now = () => { const d=new Date(); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); };
+const isChinese = t => /[\u4e00-\u9fa5]/.test(t);
 
 function toast(msg){
   const t=document.getElementById('toast');
@@ -485,8 +524,32 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
+// ══ LANG HELPERS ══
+function getSrcLang(){ return LANGS[srcCode]?.voice || 'zh-CN'; }
+function getTgtLang(){ return LANGS[tgtCode]?.voice || 'es-ES'; }
+
+function onLangChange(){
+  srcCode = document.getElementById('srcLangSel').value;
+  tgtCode = document.getElementById('tgtLangSel').value;
+  // 更新麦克风标签
+  document.getElementById('trMicSrcLabel').textContent = LANGS[srcCode]?.flag || '🎤';
+  document.getElementById('trMicTgtLabel').textContent = LANGS[tgtCode]?.flag || '🎤';
+}
+
+function swapLang(){
+  const tmp = srcCode; srcCode = tgtCode; tgtCode = tmp;
+  document.getElementById('srcLangSel').value = srcCode;
+  document.getElementById('tgtLangSel').value = tgtCode;
+  onLangChange();
+  const oldSrc = document.getElementById('srcText').value;
+  document.getElementById('srcText').value = transText;
+  transText = oldSrc;
+  document.getElementById('trOut').textContent = transText;
+}
+
+// ══ TRANSLATE API ══
 async function xlate(text, from, to){
-  if(!text.trim()) return text;
+  if(!text || !text.trim() || from===to) return text;
   try{
     const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
     const d = await r.json();
@@ -494,34 +557,23 @@ async function xlate(text, from, to){
   }catch(e){ return text; }
 }
 
-// 自动检测：中文→西班牙语，其他→中文
-function detectAndXlate(text){
-  const isChinese = /[\u4e00-\u9fa5]/.test(text);
-  return isChinese ? xlate(text,'zh','es') : xlate(text,'es','zh');
-}
-function detectLangs(text){
-  return /[\u4e00-\u9fa5]/.test(text)
-    ? {from:'zh', to:'es', label:'📖 ES: '}
-    : {from:'es', to:'zh', label:'📖 ZH: '};
+// 自动检测：中文→西班牙语，否则→中文（聊天室默认逻辑）
+async function autoXlate(text){
+  if(isChinese(text)) return { trans: await xlate(text,'zh','es'), arrow:'📖 ES: ' };
+  else return { trans: await xlate(text,'es','zh'), arrow:'📖 ZH: ' };
 }
 
-// ══════════════════════════════════════
-//  TEXT TO SPEECH 朗读
-// ══════════════════════════════════════
-function speak(text){
+// ══ TTS ══
+function speak(text, langCode){
   if(!text||!text.trim()) return;
   window.speechSynthesis.cancel();
-  const isChinese=/[一-龥]/.test(text);
-  const lang = isChinese ? 'zh-CN' : 'es-ES';
+  const lang = langCode || (isChinese(text) ? 'zh-CN' : 'es-ES');
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = lang;
-  utt.rate = 0.9;
+  utt.lang = lang; utt.rate = 0.9;
   window.speechSynthesis.speak(utt);
 }
 
-// ══════════════════════════════════════
-//  PAGE NAVIGATION
-// ══════════════════════════════════════
+// ══ PAGE NAV ══
 function goPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -530,72 +582,70 @@ function goPage(id){
   if(id==='mgr') initMgr();
 }
 
-// ══════════════════════════════════════
-//  VOICE INPUT
-// ══════════════════════════════════════
-let vRec=null, vTarget=null, vBtnId=null, vActive=false;
-
+// ══ VOICE ══
 function startVoice(target, lang, btnId){
   if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
     toast('请用 Chrome 或系统浏览器，微信不支持语音');return;
   }
-  // 如果当前这个按钮正在录音，点击停止
-  if(vActive && vTarget===target && vBtnId===btnId){
-    vRec&&vRec.stop(); return;
-  }
-  // 停掉之前的录音
+  if(vActive&&vTarget===target&&vBtnId===btnId){ vRec&&vRec.stop(); return; }
   if(vActive){ vRec&&vRec.stop(); }
-
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  vRec = new SR();
-  vTarget = target;
-  vBtnId = btnId;
-  vRec.lang = lang;
-  vRec.continuous = false;
-  vRec.interimResults = true;
-
-  const langLabel = lang==='zh-CN' ? '🇨🇳 中文' : '🇪🇸 Español';
-
-  vRec.onstart = ()=>{
-    vActive = true;
-    document.getElementById(btnId).classList.add('rec');
-    toast('🎤 ' + langLabel + ' 录音中，说完自动停止...');
+  vRec=new SR(); vTarget=target; vBtnId=btnId;
+  vRec.lang=lang; vRec.continuous=false; vRec.interimResults=true;
+  vRec.onstart=()=>{ vActive=true; document.getElementById(btnId)?.classList.add('rec'); toast('🎤 录音中...'); };
+  vRec.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    if(target==='tr') document.getElementById('srcText').value=t;
+    else if(target==='admin') document.getElementById('adminIn').value=t;
+    else document.getElementById('clientIn').value=t;
   };
-  vRec.onresult = e=>{
-    const t = Array.from(e.results).map(r=>r[0].transcript).join('');
-    if(target==='tr') document.getElementById('srcText').value = t;
-    else if(target==='admin') document.getElementById('adminIn').value = t;
-    else document.getElementById('clientIn').value = t;
-  };
-  vRec.onend = ()=>{
-    vActive = false;
-    const btn = document.getElementById(btnId);
-    if(btn) btn.classList.remove('rec');
+  vRec.onend=()=>{
+    vActive=false; document.getElementById(btnId)?.classList.remove('rec');
     if(target==='tr') onSrcInput();
     if(target==='admin') onAdminIn();
   };
-  vRec.onerror = e=>{
-    vActive = false;
-    const btn = document.getElementById(btnId);
-    if(btn) btn.classList.remove('rec');
-    if(e.error==='not-allowed') toast('❌ 请允许浏览器使用麦克风');
-    else if(e.error==='no-speech') toast('没听到声音，请靠近话筒重试');
-    else toast('语音错误: ' + e.error);
+  vRec.onerror=e=>{
+    vActive=false; document.getElementById(btnId)?.classList.remove('rec');
+    if(e.error==='not-allowed') toast('❌ 请允许麦克风权限');
+    else if(e.error==='no-speech') toast('没听到声音，请重试');
+    else toast('语音错误: '+e.error);
   };
   vRec.start();
 }
 
-// ══════════════════════════════════════
-//  WHATSAPP TEMPLATES
-// ══════════════════════════════════════
+// ══ TEMPLATES ══
+let BUILTIN = [
+  { id:'intro',icon:'👋',name:'初次拜访',desc:'自我介绍',
+    langs:{zh:'您好 {name}！我是 {myName}，来自 {company}。\n\n很高兴认识您！我们专注于 {product}，希望为您提供帮助。\n\n方便安排一次沟通吗？',
+           es:'¡Hola {name}! Soy {myName} de {company}.\n\n¡Encantado de conocerle! Nos especializamos en {product}.\n\n¿Podríamos coordinar una reunión?'},
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'myName',l:'我的姓名',p:'李明'},{k:'company',l:'公司',p:'XX贸易'},{k:'product',l:'产品/服务',p:'进出口'}]},
+  { id:'followup',icon:'📞',name:'跟进回访',desc:'拜访后跟进',
+    langs:{zh:'您好 {name}！\n\n感谢今天的会面。\n\n我们的 {product} 可以帮您 {benefit}。\n\n期待您的回复！',
+           es:'¡Hola {name}!\n\nGracias por su tiempo hoy.\n\nNuestro {product} puede ayudarle a {benefit}.\n\n¡Espero su respuesta!'},
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'product',l:'产品',p:'XX系列'},{k:'benefit',l:'价值',p:'节省30%成本'}]},
+  { id:'quote',icon:'💰',name:'发送报价',desc:'报价单',
+    langs:{zh:'您好 {name}！\n\n为您整理报价：\n\n📦 产品：{product}\n💵 价格：{price}\n📅 有效期：{valid}\n\n如有疑问请联系我！',
+           es:'¡Hola {name}!\n\nAquí tiene nuestra cotización:\n\n📦 Producto: {product}\n💵 Precio: {price}\n📅 Válido hasta: {valid}\n\n¡Con gusto le atiendo!'},
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'product',l:'产品',p:'XX系列'},{k:'price',l:'报价',p:'USD 500/件'},{k:'valid',l:'有效期',p:'2024-12-31'}]},
+  { id:'appt',icon:'📅',name:'预约拜访',desc:'确认时间',
+    langs:{zh:'您好 {name}！\n\n希望 {date} {time} 拜访您，地点：{place}。\n\n我会带上 {material}。\n\n时间方便吗？',
+           es:'¡Hola {name}!\n\nMe gustaría visitarle el {date} a las {time} en {place}.\n\nLlevaré {material}.\n\n¿Le viene bien?'},
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'date',l:'日期',p:'15 dic'},{k:'time',l:'时间',p:'10:00am'},{k:'place',l:'地点',p:'Su oficina'},{k:'material',l:'携带资料',p:'muestras'}]},
+  { id:'thanks',icon:'🙏',name:'感谢合作',desc:'成交致谢',
+    langs:{zh:'您好 {name}！\n\n非常感谢您的合作！\n\n订单 {order} 已确认，{date} 前完成 {action}。\n\n随时为您服务！',
+           es:'¡Hola {name}!\n\n¡Gracias por trabajar con nosotros!\n\nSu pedido {order} está confirmado. Completaremos {action} antes del {date}.\n\n¡A su disposición!'},
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'order',l:'订单',p:'#001'},{k:'date',l:'日期',p:'20 dic'},{k:'action',l:'行动',p:'envío'}]},
+  { id:'free',icon:'✏️',name:'自定义',desc:'自由编写',langs:{zh:'',es:''},fields:[]}
+];
+
 function getCustom(){ try{return JSON.parse(localStorage.getItem('ctpl')||'[]');}catch(e){return[];} }
 function saveCustom(a){ localStorage.setItem('ctpl',JSON.stringify(a)); }
 function allTpls(){ return [...BUILTIN,...getCustom()]; }
 
 function renderTpls(){
-  document.getElementById('tplGrid').innerHTML=allTpls().map(t=>`
+  document.getElementById('tplGrid').innerHTML = allTpls().map(t=>`
     <div class="tpl-card" id="tc_${t.id}" onclick="selectTpl('${t.id}')">
-      <button class="tpl-edit" onclick="event.stopPropagation();openEditTpl('${t.id}')">✏️ 编辑</button>
+      <button class="tpl-edit" onclick="event.stopPropagation();openEditTpl('${t.id}')">✏️</button>
       <div class="tpl-icon">${t.icon}</div>
       <div class="tpl-name">${esc(t.name)}</div>
       <div class="tpl-desc">${esc(t.desc)}</div>
@@ -603,122 +653,147 @@ function renderTpls(){
 }
 
 function selectTpl(id){
-  selectedTpl=allTpls().find(t=>t.id===id);
+  selectedTpl = allTpls().find(t=>t.id===id);
   document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('sel'));
-  const el=document.getElementById('tc_'+id); if(el) el.classList.add('sel');
-
-  const editor=document.getElementById('tplEditor');
-  const preview=document.getElementById('tplPreview');
-
+  document.getElementById('tc_'+id)?.classList.add('sel');
+  const editor = document.getElementById('tplEditor');
+  const preview = document.getElementById('tplPreview');
   if(id==='free'){
     editor.style.display='block';
     document.getElementById('tplFields').innerHTML=`
       <div class="field"><label>发送语言</label>
-        <select id="tplLang" onchange="updatePrev()"><option value="es">Español</option><option value="zh">中文</option></select>
-      </div>
+        <select id="tplLang" onchange="updatePrev()">
+          <option value="es">Español</option><option value="zh">中文</option>
+          <option value="en">English</option><option value="pt">Português</option>
+        </select></div>
       <div class="field"><label>内容</label><textarea id="freeBody" rows="6" oninput="updatePrev()"></textarea></div>
       <div class="field"><label>客户姓名（预览）</label><input id="freeContact" placeholder="Sr. García" oninput="updatePrev()"></div>`;
     preview.style.display='block'; updatePrev(); return;
   }
-  if(selectedTpl&&selectedTpl.fields&&selectedTpl.fields.length){
+  if(selectedTpl?.fields?.length){
     editor.style.display='block';
     document.getElementById('tplFields').innerHTML=`
       <div class="field"><label>发送语言</label>
-        <select id="tplLang" onchange="updatePrev()"><option value="es">Español</option><option value="zh">中文</option></select>
-      </div>
+        <select id="tplLang" onchange="updatePrev()">
+          <option value="es">Español</option><option value="zh">中文</option>
+          <option value="en">English</option><option value="pt">Português</option>
+        </select></div>
       ${selectedTpl.fields.map(f=>`
         <div class="field"><label>${esc(f.l)}</label>
-          <input id="f_${f.k}" placeholder="${esc(f.p)}" oninput="updatePrev()">
-        </div>`).join('')}`;
+          <input id="f_${f.k}" placeholder="${esc(f.p)}" oninput="updatePrev()"></div>`).join('')}`;
     preview.style.display='block'; updatePrev();
   }
 }
 
 async function updatePrev(){
   if(!selectedTpl) return;
-  let lang, body, zhBody, contact;
+  let lang = document.getElementById('tplLang')?.value||'es';
+  let body, zhBody, contact;
   if(selectedTpl.id==='free'){
-    lang=document.getElementById('tplLang')?.value||'es';
-    body=document.getElementById('freeBody')?.value||'';
-    contact=document.getElementById('freeContact')?.value||'客户';
-    zhBody=lang==='es'?await xlate(body,'es','zh'):body;
+    body = document.getElementById('freeBody')?.value||'';
+    contact = document.getElementById('freeContact')?.value||'客户';
+    zhBody = lang==='es' ? await xlate(body,'es','zh') : body;
   } else {
-    lang=document.getElementById('tplLang')?.value||'es';
-    body=selectedTpl.langs[lang]||'';
-    zhBody=selectedTpl.langs['zh']||'';
-    contact=document.getElementById('f_name')?.value||'客户';
+    body = selectedTpl.langs[lang]||selectedTpl.langs['es']||'';
+    zhBody = selectedTpl.langs['zh']||'';
+    contact = document.getElementById('f_name')?.value||'客户';
     (selectedTpl.fields||[]).forEach(f=>{
-      const v=document.getElementById('f_'+f.k)?.value||f.p;
-      body=body.replace(new RegExp('{'+f.k+'}','g'),v);
-      zhBody=zhBody.replace(new RegExp('{'+f.k+'}','g'),v);
+      const v = document.getElementById('f_'+f.k)?.value||f.p;
+      body = body.replace(new RegExp('{'+f.k+'}','g'),v);
+      zhBody = zhBody.replace(new RegExp('{'+f.k+'}','g'),v);
     });
   }
-  document.getElementById('prevContact').textContent=contact;
-  document.getElementById('prevText').textContent=body;
-  document.getElementById('prevTime').textContent=now();
-  const wrap=document.getElementById('zhRefWrap');
-  if(lang==='es'&&zhBody){document.getElementById('zhRefText').textContent=zhBody;wrap.style.display='block';}
+  document.getElementById('prevContact').textContent = contact;
+  document.getElementById('prevText').textContent = body;
+  document.getElementById('prevTime').textContent = now();
+  const wrap = document.getElementById('zhRefWrap');
+  if(lang!=='zh' && zhBody){ document.getElementById('zhRefText').textContent=zhBody; wrap.style.display='block'; }
   else wrap.style.display='none';
 }
 
 function copyMsg(){
-  const t=document.getElementById('prevText')?.textContent||'';
+  const t = document.getElementById('prevText')?.textContent||'';
   if(!t){toast('请先填写内容');return;}
   navigator.clipboard.writeText(t); toast('✅ 已复制');
 }
 function sendWa(){
-  const phone=document.getElementById('waPhone').value.replace(/\s+/g,'').replace(/^\+/,'');
-  const t=document.getElementById('prevText')?.textContent||'';
+  const phone = document.getElementById('waPhone').value.replace(/\s+/g,'').replace(/^\+/,'');
+  const t = document.getElementById('prevText')?.textContent||'';
   if(!t){toast('请先填写内容');return;}
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(t)}`,'_blank');
 }
 
-// ══════════════════════════════════════
-//  TRANSLATOR
-// ══════════════════════════════════════
+// ══ TRANSLATOR ══
+function getCustomPhrases(){ try{return JSON.parse(localStorage.getItem('phrases')||'[]');}catch(e){return[];} }
+function saveCustomPhrases(a){ localStorage.setItem('phrases',JSON.stringify(a)); }
+
+const DEFAULT_PHRASES = [
+  {zh:'我马上到',es:'Ya voy en camino'},
+  {zh:'等一下',es:'Un momento, por favor'},
+  {zh:'多少钱？',es:'¿Cuánto cuesta?'},
+  {zh:'能打折吗？',es:'¿Me puede dar un descuento?'},
+  {zh:'太贵了',es:'Es muy caro'},
+  {zh:'好的，同意',es:'Sí, de acuerdo'},
+  {zh:'明天联系',es:'Le contacto mañana'},
+  {zh:'我们质量有保证',es:'Garantizamos la calidad'},
+];
+
 function renderPhrases(){
-  document.getElementById('phrases').innerHTML=PHRASES.map(p=>`
-    <div class="tpl-card" onclick="quickPhrase('${p.zh.replace(/'/g,"\\'")}','${p.es.replace(/'/g,"\\'")}')">
-      <div style="font-size:12px;font-weight:600">${esc(p.zh)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(p.es)}</div>
+  const custom = getCustomPhrases();
+  const all = [...DEFAULT_PHRASES.map(p=>({...p,_builtin:true})), ...custom];
+  document.getElementById('phrases').innerHTML = all.map((p,i)=>`
+    <div class="phrase-card" onclick="quickPhrase('${esc(p.zh)}','${esc(p.es)}')">
+      ${!p._builtin ? `<button class="phrase-del" onclick="event.stopPropagation();deletePhrase(${i - DEFAULT_PHRASES.length})">✕</button>` : ''}
+      <div class="phrase-zh">${esc(p.zh)} <span class="phrase-speak" onclick="event.stopPropagation();speak('${esc(p.zh)}','zh-CN')">🔊</span></div>
+      <div class="phrase-es">${esc(p.es)} <span class="phrase-speak" onclick="event.stopPropagation();speak('${esc(p.es)}','es-ES')">🔊</span></div>
     </div>`).join('');
 }
 
-function quickPhrase(zh,es){
-  const body=langPair.src==='zh'?zh:es;
-  const trans=langPair.src==='zh'?es:zh;
-  document.getElementById('srcText').value=body;
-  transText=trans;
-  document.getElementById('trOut').textContent=trans;
-  document.getElementById('trResult').style.display='block';
+function quickPhrase(zh, es){
+  document.getElementById('srcText').value = zh;
+  transText = es;
+  document.getElementById('trOut').textContent = es;
+  document.getElementById('trResult').style.display = 'block';
 }
 
-function swapLang(){
-  langPair=langPair.src==='zh'
-    ?{src:'es',tgt:'zh',srcL:'🇪🇸 Español',tgtL:'🇨🇳 中文'}
-    :{src:'zh',tgt:'es',srcL:'🇨🇳 中文',tgtL:'🇪🇸 Español'};
-  document.getElementById('srcLang').textContent=langPair.srcL;
-  document.getElementById('tgtLang').textContent=langPair.tgtL;
-  const old=document.getElementById('srcText').value;
-  document.getElementById('srcText').value=transText;
-  transText=old;
-  document.getElementById('trOut').textContent=transText;
+function openAddPhrase(){ document.getElementById('phraseModalBg').classList.add('show'); }
+function closePhraseModal(){ document.getElementById('phraseModalBg').classList.remove('show'); }
+
+function savePhrase(){
+  const zh = document.getElementById('pZh').value.trim();
+  const es = document.getElementById('pEs').value.trim();
+  if(!zh||!es){toast('请填写中文和西班牙语');return;}
+  const arr = getCustomPhrases();
+  arr.push({zh,es});
+  saveCustomPhrases(arr);
+  document.getElementById('pZh').value='';
+  document.getElementById('pEs').value='';
+  closePhraseModal();
+  renderPhrases();
+  toast('✅ 短语已添加');
+}
+
+function deletePhrase(i){
+  const arr = getCustomPhrases();
+  arr.splice(i,1);
+  saveCustomPhrases(arr);
+  renderPhrases();
 }
 
 async function doTranslate(){
-  const text=document.getElementById('srcText').value.trim();
+  const text = document.getElementById('srcText').value.trim();
   if(!text){toast('请输入文字');return;}
   document.getElementById('trOut').textContent='翻译中...';
   document.getElementById('trResult').style.display='block';
-  transText=await xlate(text,langPair.src,langPair.tgt);
-  document.getElementById('trOut').textContent=transText;
+  transText = await xlate(text, srcCode, tgtCode);
+  document.getElementById('trOut').textContent = transText;
 }
 
 let srcTimer;
-function onSrcInput(){clearTimeout(srcTimer);srcTimer=setTimeout(doTranslate,900);}
-function copyTrans(){navigator.clipboard.writeText(transText);toast('✅ 已复制');}
+function onSrcInput(){ clearTimeout(srcTimer); srcTimer=setTimeout(doTranslate,900); }
+function copyTrans(){ navigator.clipboard.writeText(transText); toast('✅ 已复制'); }
 function sendTransWa(){
-  const phone=prompt('输入 WhatsApp 号码（含区号，如 +57300...）')||'';
+  const phone = prompt('输入 WhatsApp 号码（含区号）')||'';
   if(!phone) return;
   window.open(`https://wa.me/${phone.replace(/\s+/g,'').replace(/^\+/,'')}?text=${encodeURIComponent(transText)}`,'_blank');
 }
@@ -727,19 +802,17 @@ function sendToChat(){
   sendClient(transText);
 }
 
-// ══════════════════════════════════════
-//  ADMIN: ROOM MANAGEMENT
-// ══════════════════════════════════════
+// ══ ADMIN: ROOMS ══
 function initMgr(){
   if(roomsUnsub) roomsUnsub();
-  roomsUnsub=db.collection('customerRooms').orderBy('createdAt','desc').onSnapshot(snap=>{
-    const rooms=snap.docs.map(d=>({id:d.id,...d.data()}));
-    const el=document.getElementById('roomList');
-    if(!rooms.length){el.innerHTML='<div class="empty">暂无聊天室，创建一个吧</div>';return;}
-    el.innerHTML=rooms.map(r=>{
-      const isOn=r.isOpen||false;
-      const link=r.roomLink||`${CHAT_URL}#${r.roomId}`;
-      return`<div class="room-item">
+  roomsUnsub = db.collection('customerRooms').orderBy('createdAt','desc').onSnapshot(snap=>{
+    const rooms = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const el = document.getElementById('roomList');
+    if(!rooms.length){el.innerHTML='<div class="empty">暂无聊天室</div>';return;}
+    el.innerHTML = rooms.map(r=>{
+      const isOn = r.isOpen||false;
+      const link = r.roomLink||`${CHAT_URL}#${r.roomId}`;
+      return `<div class="room-item">
         <div class="room-hdr">
           <div class="room-name">👤 ${esc(r.clientName)}</div>
           <div class="toggle-pill" onclick="toggleRoom('${r.roomId}',${isOn})">
@@ -755,14 +828,14 @@ function initMgr(){
         </div>
       </div>`;
     }).join('');
-  },err=>toast('加载失败:'+err.message));
+  });
 }
 
 async function createRoom(){
-  const name=document.getElementById('newName').value.trim();
+  const name = document.getElementById('newName').value.trim();
   if(!name){toast('请输入客户姓名');return;}
-  const roomId='room_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);
-  const link=`${CHAT_URL}#${roomId}`;
+  const roomId = 'room_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);
+  const link = `${CHAT_URL}#${roomId}`;
   try{
     await db.collection('customerRooms').doc(roomId).set({
       roomId, clientName:name,
@@ -772,7 +845,7 @@ async function createRoom(){
     document.getElementById('newName').value='';
     navigator.clipboard.writeText(link);
     toast('✅ 已创建并复制链接');
-  }catch(e){toast('❌ 创建失败:'+e.message.substring(0,50));}
+  }catch(e){toast('❌ 创建失败:'+e.message.substring(0,40));}
 }
 
 async function toggleRoom(id,cur){
@@ -786,46 +859,101 @@ async function delRoom(id,name){
   catch(e){toast('❌ '+e.message.substring(0,40));}
 }
 
-function copyLink(link){navigator.clipboard.writeText(link);toast('✅ 已复制链接');}
+function copyLink(link){ navigator.clipboard.writeText(link); toast('✅ 已复制链接'); }
 
-// ══════════════════════════════════════
-//  ADMIN CHAT
-// ══════════════════════════════════════
+// ══ IMAGE UPLOAD ══
+let adminImgData = null;
+
+function onAdminImgPick(input){
+  const file = input.files[0]; if(!file) return;
+  adminImgFile = file;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    adminImgData = e.target.result;
+    document.getElementById('adminImgThumb').src = adminImgData;
+    document.getElementById('adminImgName').textContent = file.name;
+    document.getElementById('adminImgPreview').style.display='flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAdminImg(){
+  adminImgFile=null; adminImgData=null;
+  document.getElementById('adminImgPreview').style.display='none';
+  document.getElementById('adminImgInput').value='';
+}
+
+async function uploadImg(file){
+  // 用 base64 存到 Firestore（小图片），大图用 Storage
+  return new Promise((resolve)=>{
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function sendClientImg(input){
+  const file = input.files[0]; if(!file||!clientRoomId) return;
+  toast('📤 上传中...');
+  const dataUrl = await uploadImg(file);
+  await db.collection('customerRooms').doc(clientRoomId).collection('messages').add({
+    role:'client', senderId:clientId, type:'image',
+    originalText:'[图片]', translatedText:'[Imagen]',
+    imageData:dataUrl, timestamp:new Date()
+  });
+  input.value='';
+  toast('✅ 图片已发送');
+}
+
+// ══ ADMIN CHAT ══
 function openAdminChat(roomId, clientName){
-  adminRoomId=roomId;
-  document.getElementById('adminChatTitle').textContent='👤 '+clientName;
+  adminRoomId = roomId;
+  chatLog.admin = [];
+  document.getElementById('adminChatTitle').textContent = '👤 '+clientName;
   document.getElementById('adminChat').classList.add('show');
   document.getElementById('adminMsgs').innerHTML='';
   if(adminMsgUnsub) adminMsgUnsub();
-  adminMsgUnsub=db.collection('customerRooms').doc(roomId).collection('messages')
+  adminMsgUnsub = db.collection('customerRooms').doc(roomId).collection('messages')
     .orderBy('timestamp','asc').onSnapshot(snap=>{
-      snap.docChanges().forEach(ch=>{if(ch.type==='added') addBubble(ch.doc.data(),'adminMsgs',true);});
+      snap.docChanges().forEach(ch=>{
+        if(ch.type==='added'){
+          const d = ch.doc.data();
+          chatLog.admin.push(d);
+          addBubble(d,'adminMsgs',true);
+        }
+      });
     });
 }
 
 let adminTimer;
-// 管理员可以输中文或西班牙语
-// 逻辑：自动翻成ES发送，同时预览客户看到的ZH
 function onAdminIn(){
-  const t=document.getElementById('adminIn').value.trim();
-  const prev=document.getElementById('adminPrev');
+  const t = document.getElementById('adminIn').value.trim();
+  const prev = document.getElementById('adminPrev');
   if(!t){prev.style.display='none';return;}
   prev.style.display='block';
   document.getElementById('adminPrevText').textContent='翻译中...';
   clearTimeout(adminTimer);
-  adminTimer=setTimeout(async()=>{
-    const trans = await detectAndXlate(t);
-    const {label} = detectLangs(t);
-    document.getElementById('adminPrevText').textContent = label + trans;
+  adminTimer = setTimeout(async()=>{
+    const {trans} = await autoXlate(t);
+    document.getElementById('adminPrevText').textContent = trans;
   },600);
 }
 
 async function sendAdmin(){
-  const t=document.getElementById('adminIn').value.trim();
+  // 如果有图片待发
+  if(adminImgData && adminRoomId){
+    await db.collection('customerRooms').doc(adminRoomId).collection('messages').add({
+      role:'admin', senderId:'admin', type:'image',
+      originalText:'[图片]', translatedText:'[Imagen]',
+      imageData:adminImgData, timestamp:new Date()
+    });
+    clearAdminImg();
+  }
+  const t = document.getElementById('adminIn').value.trim();
   if(!t||!adminRoomId) return;
   document.getElementById('adminIn').value='';
   document.getElementById('adminPrev').style.display='none';
-  const trans = await detectAndXlate(t);
+  const {trans} = await autoXlate(t);
   await db.collection('customerRooms').doc(adminRoomId).collection('messages').add({
     role:'admin', originalText:t, translatedText:trans, senderId:'admin', timestamp:new Date()
   });
@@ -836,46 +964,48 @@ function closeAdminChat(){
   if(adminMsgUnsub) adminMsgUnsub();
 }
 
-// ══════════════════════════════════════
-//  CLIENT CHAT
-// ══════════════════════════════════════
+// ══ CLIENT CHAT ══
 function goClientChat(){
-  let input=document.getElementById('clientLink').value.trim();
-  let roomId=input.includes('#')?input.split('#')[1]:input;
-  const m=roomId.match(/room_\d+_[a-z0-9]+/);
-  if(m) roomId=m[0];
+  let input = document.getElementById('clientLink').value.trim();
+  let roomId = input.includes('#') ? input.split('#')[1] : input;
+  const m = roomId.match(/room_\d+_[a-z0-9]+/);
+  if(m) roomId = m[0];
   if(!roomId||!roomId.startsWith('room_')){toast('无效链接格式');return;}
   openClientChat(roomId);
 }
 
 function openClientChat(roomId){
-  clientRoomId=roomId;
+  clientRoomId = roomId;
+  chatLog.client = [];
   document.getElementById('clientChat').classList.add('show');
   document.getElementById('clientMsgs').innerHTML='';
   addSys(document.getElementById('clientMsgs'),'🔗 正在连接...');
-
   if(clientRoomUnsub) clientRoomUnsub();
-  clientRoomUnsub=db.collection('customerRooms').doc(roomId).onSnapshot(doc=>{
+  clientRoomUnsub = db.collection('customerRooms').doc(roomId).onSnapshot(doc=>{
     if(!doc.exists){addSys(document.getElementById('clientMsgs'),'❌ 房间不存在');return;}
-    const on=doc.data().isOpen||false;
-    document.getElementById('clientIn').disabled=!on;
-    document.getElementById('clientSend').disabled=!on;
-    document.getElementById('clientMic').style.opacity=on?'1':'0.4';
-    document.getElementById('clientStatus').textContent=on?'🟢 对话已开启':'🔴 等待客服开启';
+    const on = doc.data().isOpen||false;
+    document.getElementById('clientIn').disabled = !on;
+    document.getElementById('clientSend').disabled = !on;
+    document.getElementById('clientStatus').textContent = on?'🟢 对话已开启':'🔴 等待客服开启';
   });
-
   if(clientMsgUnsub) clientMsgUnsub();
-  clientMsgUnsub=db.collection('customerRooms').doc(roomId).collection('messages')
+  clientMsgUnsub = db.collection('customerRooms').doc(roomId).collection('messages')
     .orderBy('timestamp','asc').onSnapshot(snap=>{
-      snap.docChanges().forEach(ch=>{if(ch.type==='added') addBubble(ch.doc.data(),'clientMsgs',false);});
+      snap.docChanges().forEach(ch=>{
+        if(ch.type==='added'){
+          const d = ch.doc.data();
+          chatLog.client.push(d);
+          addBubble(d,'clientMsgs',false);
+        }
+      });
     });
 }
 
 async function sendClient(overrideText){
-  const t=overrideText||document.getElementById('clientIn').value.trim();
+  const t = overrideText||document.getElementById('clientIn').value.trim();
   if(!t||!clientRoomId) return;
   if(!overrideText) document.getElementById('clientIn').value='';
-  const trans = await detectAndXlate(t);
+  const {trans} = await autoXlate(t);
   await db.collection('customerRooms').doc(clientRoomId).collection('messages').add({
     role:'client', senderId:clientId, originalText:t, translatedText:trans, timestamp:new Date()
   });
@@ -887,23 +1017,16 @@ function closeClientChat(){
   if(clientRoomUnsub) clientRoomUnsub();
 }
 
-// ══════════════════════════════════════
-//  SHARED BUBBLE RENDERER
-//  isAdminView=true → 管理员视图（admin=蓝右, client=绿左）
-//  isAdminView=false → 客户视图（client=绿右, admin=蓝左）
-// ══════════════════════════════════════
+// ══ BUBBLE RENDERER ══
 function addBubble(d, listId, isAdminView){
-  const isAdmin = d.role === 'admin';
+  const isAdmin = d.role==='admin';
   const isMe = isAdminView ? isAdmin : !isAdmin;
   const el = document.createElement('div');
-  el.className = 'msg ' + (isMe ? 'me' : 'them');
+  el.className = 'msg '+(isMe?'me':'them');
 
   const senderLabel = isAdminView
-    ? (isAdmin ? '🧑‍💼 我 (ES)' : '👤 客户 (ZH)')
-    : (isAdmin ? '🧑‍💼 客服 (ES)' : '👤 我 (ZH)');
-
-  const isSrcChinese = /[一-龥]/.test(d.originalText || '');
-  const arrow = isSrcChinese ? '📖 ES: ' : '📖 ZH: ';
+    ? (isAdmin ? '🧑\u200d💼 我' : '👤 客户')
+    : (isAdmin ? '🧑\u200d💼 客服' : '👤 我');
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
@@ -913,22 +1036,29 @@ function addBubble(d, listId, isAdminView){
   sender.textContent = senderLabel;
   bubble.appendChild(sender);
 
-  const mainText = document.createElement('div');
-  mainText.className = 'b-text';
-  mainText.textContent = d.originalText || '';
-  mainText.style.cursor = 'pointer';
-  mainText.title = '点击朗读';
-  mainText.onclick = function(){ speak(d.originalText || ''); };
-  bubble.appendChild(mainText);
+  // 图片消息
+  if(d.type==='image' && d.imageData){
+    const img = document.createElement('img');
+    img.className = 'b-img';
+    img.src = d.imageData;
+    img.onclick = ()=>openLightbox(d.imageData);
+    bubble.appendChild(img);
+  } else {
+    const mainText = document.createElement('div');
+    mainText.className = 'b-text';
+    mainText.textContent = d.originalText||'';
+    mainText.onclick = function(){ speak(d.originalText||''); };
+    bubble.appendChild(mainText);
 
-  if(d.translatedText){
-    const trans = document.createElement('div');
-    trans.className = 'b-trans';
-    trans.textContent = arrow + (d.translatedText) + ' 🔊';
-    trans.style.cursor = 'pointer';
-    trans.title = '点击朗读';
-    trans.onclick = function(){ speak(d.translatedText || ''); };
-    bubble.appendChild(trans);
+    if(d.translatedText && d.translatedText!=='[Imagen]'){
+      const isSrcChinese = isChinese(d.originalText||'');
+      const arrow = isSrcChinese ? '📖 ES: ' : '📖 ZH: ';
+      const trans = document.createElement('div');
+      trans.className = 'b-trans';
+      trans.textContent = arrow + d.translatedText + ' 🔊';
+      trans.onclick = function(){ speak(d.translatedText||''); };
+      bubble.appendChild(trans);
+    }
   }
 
   const timeEl = document.createElement('div');
@@ -942,34 +1072,69 @@ function addBubble(d, listId, isAdminView){
   list.scrollTop = list.scrollHeight;
 }
 
-function addSys(container,msg){
-  const el=document.createElement('div');
-  el.className='sys-msg'; el.textContent=msg;
+function addSys(container, msg){
+  const el = document.createElement('div');
+  el.className = 'sys-msg'; el.textContent = msg;
   container.appendChild(el);
 }
 
-// ══════════════════════════════════════
-//  TEMPLATE MODAL
-// ══════════════════════════════════════
+// ══ 导出聊天记录 ══
+function exportChat(role){
+  const logs = chatLog[role];
+  if(!logs||!logs.length){toast('暂无聊天记录');return;}
+
+  const title = role==='admin'
+    ? document.getElementById('adminChatTitle').textContent
+    : '客户聊天记录';
+
+  let text = `${title}\n导出时间：${new Date().toLocaleString()}\n${'─'.repeat(40)}\n\n`;
+  logs.forEach(d=>{
+    if(d.type==='image'){
+      text += `[${d.role==='admin'?'客服':'客户'}] [图片]\n`;
+    } else {
+      const sender = d.role==='admin'?'客服':'客户';
+      text += `[${sender}] ${d.originalText||''}\n`;
+      if(d.translatedText) text += `  翻译：${d.translatedText}\n`;
+    }
+    text += '\n';
+  });
+
+  // 下载为 txt
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `聊天记录_${Date.now()}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('✅ 已导出聊天记录');
+}
+
+// ══ LIGHTBOX ══
+function openLightbox(src){
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+}
+
+// ══ TEMPLATE MODAL ══
 function openEditTpl(id){
-  const tpl=allTpls().find(t=>t.id===id); if(!tpl) return;
-  editingId=id;
-  document.getElementById('modalTitle').textContent='编辑：'+tpl.name;
-  document.getElementById('mName').value=tpl.name;
-  document.getElementById('mIcon').value=tpl.icon;
-  document.getElementById('mZh').value=tpl.langs.zh||'';
-  document.getElementById('mEs').value=tpl.langs.es||'';
-  document.getElementById('mFields').value=(tpl.fields||[]).map(f=>`${f.k}|${f.l}|${f.p}`).join('\n');
+  const tpl = allTpls().find(t=>t.id===id); if(!tpl) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = '编辑：'+tpl.name;
+  document.getElementById('mName').value = tpl.name;
+  document.getElementById('mIcon').value = tpl.icon;
+  document.getElementById('mZh').value = tpl.langs.zh||'';
+  document.getElementById('mEs').value = tpl.langs.es||'';
+  document.getElementById('mFields').value = (tpl.fields||[]).map(f=>`${f.k}|${f.l}|${f.p}`).join('\n');
   document.getElementById('modalBg').classList.add('show');
 }
 
 function openAddTpl(){
   editingId='__new__';
   document.getElementById('modalTitle').textContent='新建模板';
-  document.getElementById('mName').value='';
+  ['mName','mZh','mEs','mFields'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mIcon').value='📝';
-  document.getElementById('mZh').value='';
-  document.getElementById('mEs').value='';
   document.getElementById('mFields').value='name|客户姓名|Sr. García';
   document.getElementById('modalBg').classList.add('show');
 }
@@ -977,25 +1142,25 @@ function openAddTpl(){
 function closeModal(){ document.getElementById('modalBg').classList.remove('show'); editingId=null; }
 
 function saveModal(){
-  const name=document.getElementById('mName').value.trim();
+  const name = document.getElementById('mName').value.trim();
   if(!name){toast('请填写名称');return;}
-  const icon=document.getElementById('mIcon').value.trim()||'📝';
-  const zh=document.getElementById('mZh').value;
-  const es=document.getElementById('mEs').value;
-  const fields=(document.getElementById('mFields').value.trim()||'').split('\n').filter(l=>l.trim()).map(l=>{
+  const icon = document.getElementById('mIcon').value.trim()||'📝';
+  const zh = document.getElementById('mZh').value;
+  const es = document.getElementById('mEs').value;
+  const fields = (document.getElementById('mFields').value.trim()||'').split('\n').filter(l=>l.trim()).map(l=>{
     const[k,label,p]=l.split('|');
     return{k:(k||'').trim(),l:(label||k||'').trim(),p:(p||'').trim()};
   }).filter(f=>f.k);
 
   if(editingId==='__new__'){
-    const arr=getCustom();
+    const arr = getCustom();
     arr.push({id:'ct_'+Date.now(),icon,name,desc:'自定义',langs:{zh,es},fields});
     saveCustom(arr);
   } else {
-    const b=BUILTIN.find(t=>t.id===editingId);
+    const b = BUILTIN.find(t=>t.id===editingId);
     if(b){ Object.assign(b,{name,icon,langs:{zh,es},fields}); }
-    else {
-      const arr=getCustom(), i=arr.findIndex(t=>t.id===editingId);
+    else{
+      const arr = getCustom(), i = arr.findIndex(t=>t.id===editingId);
       if(i>=0){arr[i]={...arr[i],name,icon,langs:{zh,es},fields};saveCustom(arr);}
     }
   }
@@ -1003,32 +1168,36 @@ function saveModal(){
 }
 
 function renderCustomList(){
-  const arr=getCustom();
-  document.getElementById('customList').innerHTML=arr.length
-    ?arr.map((t,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+  const arr = getCustom();
+  document.getElementById('customList').innerHTML = arr.length
+    ? arr.map((t,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:14px">${esc(t.icon)} ${esc(t.name)}</span>
         <div style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="openEditTpl('${t.id}')">✏️</button>
           <button class="btn btn-red btn-sm" onclick="delCustom(${i})">删除</button>
         </div>
       </div>`).join('')
-    :'<div style="font-size:13px;color:var(--muted)">暂无自定义模板</div>';
+    : '<div style="font-size:13px;color:var(--muted)">暂无自定义模板</div>';
 }
 
-function delCustom(i){const a=getCustom();a.splice(i,1);saveCustom(a);renderTpls();renderCustomList();}
+function delCustom(i){ const a=getCustom();a.splice(i,1);saveCustom(a);renderTpls();renderCustomList(); }
 
-// ══════════════════════════════════════
-//  INIT — 检查 URL hash，直接进客户聊天
-// ══════════════════════════════════════
+// ══ INIT ══
 function init(){
+  // 恢复模板覆盖
+  const ov = JSON.parse(localStorage.getItem('tplOverrides')||'{}');
+  Object.entries(ov).forEach(([id,data])=>{
+    const tpl = BUILTIN.find(t=>t.id===id);
+    if(tpl) Object.assign(tpl,data);
+  });
+
   renderTpls();
   renderPhrases();
   renderCustomList();
+  onLangChange();
 
-  // 如果 URL 有 #room_xxx，直接打开客户聊天室
-  const hash=location.hash.substring(1);
+  const hash = location.hash.substring(1);
   if(hash && hash.startsWith('room_')){
-    // 隐藏底部导航，全屏显示聊天
     document.getElementById('nav').style.display='none';
     openClientChat(hash);
   }
