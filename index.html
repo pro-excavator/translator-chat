@@ -4,173 +4,198 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>拜访助手 · 话术 & 翻译</title>
+
+<!-- Firebase 最先加载 -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase 立即初始化，不等任何用户操作 -->
+<script>
+const FB_CONFIG = {
+  apiKey: "AIzaSyA8LLIU_vxZ2AS14MDAvGzQRViJ3R--FXY",
+  authDomain: "emp-task-system.firebaseapp.com",
+  projectId: "emp-task-system",
+  storageBucket: "emp-task-system.firebasestorage.app",
+  messagingSenderId: "97538682585",
+  appId: "1:97538682585:web:28c9bf58ad40efb929d8c8"
+};
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.firestore();
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --brand:#1a1a2e; --accent:#4f8ef7; --accent2:#22c27a; --wa:#25D366;
-  --surface:#f7f8fc; --card:#ffffff; --border:rgba(0,0,0,0.08);
-  --text:#111827; --muted:#6b7280; --radius:18px; --radius-sm:10px;
-  --admin-bubble:#4f8ef7;   /* 管理员：蓝 */
-  --client-bubble:#22c27a;  /* 客户：绿 */
+:root{
+  --brand:#1a1a2e; --accent:#4f8ef7; --green:#22c27a; --wa:#25D366;
+  --surface:#f7f8fc; --card:#fff; --border:rgba(0,0,0,.08);
+  --text:#111827; --muted:#6b7280; --r:18px; --rs:10px;
+  --bubble-admin:#4f8ef7; --bubble-client:#22c27a;
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--surface);color:var(--text);min-height:100vh;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--surface);color:var(--text);min-height:100vh}
 
 /* NAV */
-.tabs{display:flex;background:var(--brand);padding:0 16px;gap:4px;position:sticky;top:0;z-index:100;}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 4px 10px;color:rgba(255,255,255,0.45);font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;letter-spacing:.3px;}
-.tab svg{width:22px;height:22px;}
-.tab.active{color:#fff;border-color:var(--accent);}
-.tab:hover:not(.active){color:rgba(255,255,255,0.75);}
+.tabs{display:flex;background:var(--brand);padding:0 8px;position:sticky;top:0;z-index:100}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 4px 9px;color:rgba(255,255,255,.4);font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.tab svg{width:22px;height:22px}
+.tab.active{color:#fff;border-color:var(--accent)}
 
 /* PAGES */
-.page{display:none;padding:16px;max-width:600px;margin:0 auto;}
-.page.active{display:block;}
+.page{display:none;padding:14px;max-width:600px;margin:0 auto}
+.page.active{display:block}
 
 /* CARDS */
-.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:14px;}
-.card-title{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:12px}
+.card-title{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
 
-/* INPUTS */
-input,textarea,select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:15px;background:var(--surface);color:var(--text);outline:none;transition:.15s;}
-input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(79,142,247,.1);}
-textarea{resize:vertical;min-height:90px;line-height:1.6;}
-label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px;}
-.field{margin-bottom:13px;}
+/* FORM */
+input,textarea,select{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--rs);font-family:inherit;font-size:15px;background:var(--surface);color:var(--text);outline:none;transition:.15s}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(79,142,247,.1)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+.field{margin-bottom:12px}
 
 /* BUTTONS */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border:none;border-radius:30px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.15s;}
-.btn:active{transform:scale(.98);}
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-wa{background:var(--wa);color:#fff;}
-.btn-green{background:var(--accent2);color:#fff;}
-.btn-ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent);}
-.btn-danger{background:#fee2e2;color:#991b1b;}
-.btn-sm{padding:9px 16px;font-size:13px;width:auto;border-radius:20px;}
-.btn-row{display:flex;gap:10px;}
-.btn-row .btn{flex:1;}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:13px;border:none;border-radius:30px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
+.btn:active{transform:scale(.98)}
+.btn-blue{background:var(--accent);color:#fff}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn-red{background:#fee2e2;color:#991b1b}
+.btn-sm{padding:8px 15px;font-size:13px;width:auto;border-radius:20px}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{flex:1}
 
-/* TEMPLATES */
-.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.tpl-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:.15s;position:relative;}
-.tpl-card:hover{border-color:var(--accent);background:#eef4ff;}
-.tpl-card.selected{border-color:var(--accent);background:#eef4ff;box-shadow:0 0 0 3px rgba(79,142,247,.12);}
-.tpl-icon{font-size:22px;margin-bottom:6px;}
-.tpl-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
-.tpl-desc{font-size:11px;color:var(--muted);}
-.tpl-edit-btn{position:absolute;top:8px;right:8px;background:rgba(79,142,247,.12);border:none;color:var(--accent);font-size:11px;padding:3px 8px;border-radius:10px;cursor:pointer;display:none;}
-.tpl-card:hover .tpl-edit-btn{display:block;}
+/* TEMPLATE GRID */
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tpl-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:13px;cursor:pointer;transition:.15s;position:relative}
+.tpl-card:hover,.tpl-card.sel{border-color:var(--accent);background:#eef4ff}
+.tpl-card.sel{box-shadow:0 0 0 3px rgba(79,142,247,.12)}
+.tpl-icon{font-size:20px;margin-bottom:5px}
+.tpl-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.tpl-desc{font-size:11px;color:var(--muted)}
+.tpl-edit{position:absolute;top:7px;right:7px;display:none;background:rgba(79,142,247,.12);border:none;color:var(--accent);font-size:11px;padding:3px 8px;border-radius:10px;cursor:pointer}
+.tpl-card:hover .tpl-edit{display:block}
 
 /* WA PREVIEW */
-.preview-box{background:#dcf8c6;border-radius:4px 14px 14px 14px;padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#111;position:relative;}
-.preview-box::before{content:'';position:absolute;top:0;left:-7px;border:7px solid transparent;border-right-color:#dcf8c6;border-top:0;border-left:0;}
-/* 话术里的中文参考 */
-.zh-ref-box{background:#f0f7ff;border:1px dashed var(--accent);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;color:#1d4ed8;line-height:1.6;white-space:pre-wrap;}
-.zh-ref-label{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px;}
-.preview-time{font-size:11px;color:var(--muted);text-align:right;margin-top:4px;}
-.phone-mock{background:#e5ddd5;border-radius:16px;padding:16px;}
-.phone-header{background:#075e54;color:#fff;border-radius:10px 10px 0 0;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;}
-.phone-avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.wa-mock{background:#e5ddd5;border-radius:14px;padding:14px}
+.wa-header{background:#075e54;color:#fff;border-radius:10px 10px 0 0;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.wa-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:15px}
+.wa-bubble{background:#dcf8c6;border-radius:4px 14px 14px 14px;padding:12px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#111;position:relative;margin-top:10px}
+.wa-bubble::before{content:'';position:absolute;top:0;left:-7px;border:7px solid transparent;border-right-color:#dcf8c6;border-top:0;border-left:0}
+.wa-time{font-size:11px;color:var(--muted);text-align:right;margin-top:3px}
+.zh-ref{background:#eef4ff;border:1px dashed var(--accent);border-radius:10px;padding:10px;margin-top:10px;font-size:12px;color:#1d4ed8;line-height:1.6;white-space:pre-wrap}
+.zh-ref-label{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:3px}
 
-/* TRANSLATOR */
-.lang-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-.lang-badge{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text);}
-.swap-btn{background:var(--card);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s;}
-.swap-btn:hover{background:var(--surface);}
-.translate-output{background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);padding:14px;min-height:80px;font-size:15px;line-height:1.7;color:var(--text);}
-.translate-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+/* LANG SWITCH */
+.lang-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.lang-badge{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 13px;font-size:13px;font-weight:600}
+.swap-btn{background:var(--card);border:1px solid var(--border);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 
-/* STATUS */
-.status-dot{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;}
-.dot-ok{background:#d1fae5;color:#065f46;}
-.dot-err{background:#fee2e2;color:#991b1b;}
-.dot-wait{background:#fef3c7;color:#92400e;}
+/* TRANS OUTPUT */
+.trans-out{background:var(--surface);border-radius:var(--rs);border:1px solid var(--border);padding:13px;min-height:70px;font-size:15px;line-height:1.7}
+.trans-actions{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
 
 /* ROOMS */
-.room-item{background:var(--surface);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);}
-.room-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.room-name{font-weight:600;font-size:15px;}
-.toggle-pill{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
-.pill-track{width:44px;height:24px;background:#ccc;border-radius:20px;position:relative;transition:.2s;}
-.pill-track.on{background:var(--accent2);}
-.pill-track::after{content:'';width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:.2s;}
-.pill-track.on::after{left:23px;}
-.room-link-box{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--card);padding:8px 10px;border-radius:8px;border:1px solid var(--border);word-break:break-all;margin:8px 0;}
-.room-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.room-item{background:var(--surface);border-radius:14px;padding:13px;margin-bottom:8px;border:1px solid var(--border)}
+.room-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.room-name{font-weight:600;font-size:15px}
+.toggle-pill{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.pill{width:42px;height:22px;background:#ccc;border-radius:20px;position:relative;transition:.2s}
+.pill.on{background:var(--green)}
+.pill::after{content:'';width:17px;height:17px;background:#fff;border-radius:50%;position:absolute;top:2.5px;left:3px;transition:.2s}
+.pill.on::after{left:22px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-on{background:#d1fae5;color:#065f46}
+.badge-off{background:#fee2e2;color:#991b1b}
+.room-link{font-family:monospace;font-size:11px;color:var(--muted);background:var(--card);padding:7px 9px;border-radius:8px;border:1px solid var(--border);word-break:break-all;margin:7px 0}
+.room-acts{display:flex;gap:7px;flex-wrap:wrap}
 
-/* ── CHAT MESSAGES ── 双方颜色区分 */
-.msg-list{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
-.msg{max-width:80%;}
-.msg.me{align-self:flex-end;}
-.msg.them{align-self:flex-start;}
-/* 管理员气泡（蓝色，右边） */
-.msg.me .bubble{background:var(--admin-bubble);color:#fff;border-radius:18px 18px 4px 18px;}
-/* 客户气泡（绿色，左边） */
-.msg.them .bubble{background:var(--client-bubble);color:#fff;border-radius:18px 18px 18px 4px;}
-.bubble{padding:10px 14px;font-size:14px;line-height:1.6;}
-.bubble-sender{font-size:10px;opacity:.75;margin-bottom:3px;font-weight:600;letter-spacing:.3px;}
-.bubble-main{font-size:14px;}
-.bubble-trans{font-size:12px;margin-top:6px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.4);opacity:.9;font-style:italic;}
-.bubble-time{font-size:10px;opacity:.55;margin-top:4px;text-align:right;}
-/* 系统消息 */
-.sys-msg{text-align:center;font-size:11px;color:var(--muted);padding:4px 0;}
+/* CHAT */
+.msg-list{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px}
+.msg{max-width:80%}
+.msg.me{align-self:flex-end}
+.msg.them{align-self:flex-start}
+/* 管理员=蓝(右) 客户=绿(左) */
+.me .bubble{background:var(--bubble-admin);color:#fff;border-radius:18px 18px 4px 18px}
+.them .bubble{background:var(--bubble-client);color:#fff;border-radius:18px 18px 18px 4px}
+.bubble{padding:10px 13px;font-size:14px;line-height:1.6}
+.b-sender{font-size:10px;opacity:.75;margin-bottom:3px;font-weight:600}
+.b-text{font-size:14px}
+.b-trans{font-size:12px;margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.4);opacity:.9;font-style:italic}
+.b-time{font-size:10px;opacity:.5;margin-top:3px;text-align:right}
+.sys-msg{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
 
 /* CHAT LAYOUT */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 56px);max-width:600px;margin:0 auto;}
-.chat-header{background:var(--brand);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.chat-wrap{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto}
+.chat-hdr{background:var(--brand);color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.chat-hdr-close{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px}
 
-/* 管理员输入区：带中文预览 */
-.admin-input-area{background:var(--card);padding:10px 12px;border-top:1px solid var(--border);}
-.admin-trans-preview{font-size:12px;color:var(--muted);background:#f0f7ff;border-radius:8px;padding:6px 10px;margin-bottom:6px;min-height:28px;line-height:1.5;display:none;}
-.admin-trans-label{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:2px;}
-.admin-input-row{display:flex;gap:8px;}
-.admin-input-row input{border-radius:30px;padding:10px 16px;flex:1;}
-/* 客户输入区 */
-.chat-input-bar{background:var(--card);padding:10px 12px;display:flex;gap:8px;border-top:1px solid var(--border);}
-.chat-input-bar input{border-radius:30px;padding:10px 16px;flex:1;}
+/* ADMIN INPUT (with live ZH preview) */
+.admin-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.admin-preview{font-size:12px;color:var(--muted);background:#eef4ff;border-radius:8px;padding:6px 10px;margin-bottom:6px;display:none;line-height:1.5}
+.admin-preview-lbl{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:2px}
+.admin-input-row{display:flex;gap:7px}
+.admin-input-row input{border-radius:30px;flex:1}
 
-/* 发送/麦克风按钮 */
-.send-btn{background:var(--accent);color:#fff;border:none;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-.mic-btn{background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s;position:relative;}
-.mic-btn.recording{background:#fee2e2;color:#dc2626;border-color:#fca5a5;animation:pulse 1s ease-in-out infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0);}}
+/* CLIENT INPUT */
+.client-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0}
+.client-input-wrap input{border-radius:30px;flex:1}
+
+/* SEND/MIC BUTTONS */
+.icon-btn{border:none;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
+.send-btn{background:var(--accent);color:#fff}
+.mic-btn{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.mic-btn.rec{background:#fee2e2;color:#dc2626;border-color:#fca5a5;animation:pulse 1s ease-in-out infinite}
+.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.mic-lang-btn{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--accent);cursor:pointer;white-space:nowrap;line-height:1.4}
+.dual-mic{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.dual-mic-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:.15s}
+.dual-mic-btn:hover{border-color:var(--accent);background:#eef4ff}
+.dual-mic-btn.rec{background:#fee2e2;color:#dc2626;border-color:#fca5a5;animation:pulse 1s ease-in-out infinite}
+.dual-mic-btn svg{flex-shrink:0}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+
+/* FULLSCREEN OVERLAYS */
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--surface)}
+.overlay.show{display:flex;flex-direction:column}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:22px 22px 0 0;padding:22px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto}
+.modal-hdr{font-size:16px;font-weight:600;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:var(--surface);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
+
+/* STATUS */
+.dot{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:3px 9px;border-radius:20px}
+.dot-ok{background:#d1fae5;color:#065f46}
+.dot-err{background:#fee2e2;color:#991b1b}
 
 /* TOAST */
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:9999;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--brand);color:#fff;padding:9px 18px;border-radius:30px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:9999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* UTIL */
-.divider{text-align:center;color:var(--muted);font-size:12px;margin:14px 0;display:flex;align-items:center;gap:8px;}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
-.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
-.badge-open{background:#d1fae5;color:#065f46;}
-.badge-closed{background:#fee2e2;color:#991b1b;}
-.mt8{margin-top:8px;} .mt12{margin-top:12px;}
-
-/* MODAL EDITOR */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center;}
-.modal-box{background:var(--card);border-radius:24px 24px 0 0;padding:24px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;}
-.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
-.modal-close{background:var(--surface);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+/* UTILS */
+.empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav class="tabs" id="mainNav">
-  <div class="tab active" data-page="wa" onclick="switchPage('wa')">
+<!-- ══ NAV ══ -->
+<nav class="tabs" id="nav">
+  <div class="tab active" data-p="wa" onclick="goPage('wa')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l1.5-5.5A8.5 8.5 0 1 1 9 18.5L3 20z"/></svg>话术
   </div>
-  <div class="tab" data-page="translate" onclick="switchPage('translate')">
+  <div class="tab" data-p="tr" onclick="goPage('tr')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 12h14M5 16h6"/><circle cx="17" cy="16" r="3"/><path d="m15.5 17.5 3 3"/></svg>翻译
   </div>
-  <div class="tab" data-page="admin" onclick="switchPage('admin')">
+  <div class="tab" data-p="mgr" onclick="goPage('mgr')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>管理
   </div>
-  <div class="tab" data-page="settings" onclick="switchPage('settings')">
+  <div class="tab" data-p="cfg" onclick="goPage('cfg')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v3m0 16v3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M1 12h3m16 0h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>设置
   </div>
 </nav>
@@ -179,44 +204,40 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px;}
 <div id="page-wa" class="page active">
   <div class="card">
     <div class="card-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M3 20l1.5-5.5A8.5 8.5 0 1 1 9 18.5L3 20z"/></svg>
-      选择话术模板 <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;">（悬停可编辑）</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M3 20l1.5-5.5A8.5 8.5 0 1 1 9 18.5L3 20z"/></svg>
+      选择话术模板
     </div>
     <div class="tpl-grid" id="tplGrid"></div>
   </div>
 
-  <div class="card" id="tplEditorCard" style="display:none">
-    <div class="card-title">✏️ 填写变量</div>
+  <div class="card" id="tplEditor" style="display:none">
+    <div class="card-title">✏️ 填写内容</div>
     <div id="tplFields"></div>
   </div>
 
-  <div class="card" id="tplPreviewCard" style="display:none">
+  <div class="card" id="tplPreview" style="display:none">
     <div class="card-title">👁️ 预览 & 发送</div>
-    <div class="phone-mock">
-      <div class="phone-header">
-        <div class="phone-avatar">👤</div>
-        <div><div id="previewContact">客户姓名</div><div style="font-size:11px;opacity:.8">WhatsApp</div></div>
+    <div class="wa-mock">
+      <div class="wa-header">
+        <div class="wa-avatar">👤</div>
+        <div><div id="prevContact">客户</div><div style="font-size:11px;opacity:.8">WhatsApp</div></div>
       </div>
-      <div style="padding:12px 0">
-        <!-- ES发送内容 -->
-        <div class="preview-box" id="previewText"></div>
-        <div class="preview-time" id="previewTime"></div>
-        <!-- 中文参考（让你知道自己说了什么） -->
-        <div id="zhRefWrap" style="margin-top:10px;display:none;">
-          <div class="zh-ref-label">📖 中文参考（你发送的意思）</div>
-          <div class="zh-ref-box" id="zhRefText"></div>
-        </div>
+      <div class="wa-bubble" id="prevText"></div>
+      <div class="wa-time" id="prevTime"></div>
+      <div id="zhRefWrap" style="display:none">
+        <div class="zh-ref-label">📖 中文参考（你说的意思）</div>
+        <div class="zh-ref" id="zhRefText"></div>
       </div>
     </div>
     <div class="mt12">
       <div class="field">
-        <label>发送给（WhatsApp 号码含区号）</label>
+        <label>WhatsApp 号码（含区号）</label>
         <input type="tel" id="waPhone" placeholder="+57 300 000 0000">
       </div>
-      <div class="btn-row mt8">
+      <div class="btn-row">
         <button class="btn btn-ghost btn-sm" onclick="copyMsg()">📋 复制</button>
         <button class="btn btn-wa" onclick="sendWa()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M3 20l1.5-5.5A8.5 8.5 0 1 1 9 18.5L3 20z"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M3 20l1.5-5.5A8.5 8.5 0 1 1 9 18.5L3 20z"/></svg>
           WhatsApp 发送
         </button>
       </div>
@@ -225,501 +246,441 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px;}
 </div>
 
 <!-- ══ PAGE: 翻译 ══ -->
-<div id="page-translate" class="page">
+<div id="page-tr" class="page">
   <div class="card">
     <div class="lang-row">
       <div class="lang-badge" id="srcLang">🇨🇳 中文</div>
       <div class="swap-btn" onclick="swapLang()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
       </div>
       <div class="lang-badge" id="tgtLang">🇪🇸 Español</div>
     </div>
-    <!-- 输入 + 麦克风 -->
-    <div class="field" style="position:relative;">
-      <div style="display:flex;gap:8px;align-items:flex-start;">
-        <textarea id="srcText" placeholder="输入或按麦克风语音输入..." rows="4" oninput="onSrcInput()" style="flex:1;"></textarea>
-        <button class="mic-btn" id="transVoiceBtn" onclick="toggleVoice('trans')" title="语音输入">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+    <div class="field" style="display:flex;gap:8px;align-items:flex-start">
+      <textarea id="srcText" placeholder="输入或语音输入..." rows="4" oninput="onSrcInput()" style="flex:1"></textarea>
+      <div class="dual-mic">
+        <button class="dual-mic-btn" id="trMicZH" onclick="startVoice('tr','zh-CN','trMicZH')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          🇨🇳 中文
+        </button>
+        <button class="dual-mic-btn" id="trMicES" onclick="startVoice('tr','es-ES','trMicES')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          🇪🇸 Español
         </button>
       </div>
     </div>
-    <button class="btn btn-primary" onclick="doTranslate()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 8h14M5 12h14M5 16h6"/><circle cx="17" cy="16" r="3"/><path d="m15.5 17.5 3 3"/></svg>
+    <button class="btn btn-blue" onclick="doTranslate()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 8h14M5 12h14M5 16h6"/><circle cx="17" cy="16" r="3"/><path d="m15.5 17.5 3 3"/></svg>
       立即翻译
     </button>
-    <div id="translateResult" style="display:none;margin-top:14px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">翻译结果</div>
-      <div class="translate-output" id="transOutput"></div>
-      <div class="translate-actions">
+    <div id="trResult" style="display:none;margin-top:13px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:5px">翻译结果</div>
+      <div class="trans-out" id="trOut"></div>
+      <div class="trans-actions">
         <button class="btn btn-ghost btn-sm" onclick="copyTrans()">📋 复制</button>
-        <button class="btn btn-wa btn-sm" onclick="sendTransWa()">WhatsApp 发送</button>
+        <button class="btn btn-ghost btn-sm" onclick="speak(document.getElementById('trOut').textContent)">🔊 朗读</button>
+        <button class="btn btn-wa btn-sm" onclick="sendTransWa()">WhatsApp</button>
         <button class="btn btn-ghost btn-sm" onclick="sendToChat()">💬 发到聊天</button>
       </div>
     </div>
   </div>
-
   <div class="card">
     <div class="card-title">⚡ 快速短语</div>
-    <div id="phrasesGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+    <div id="phrases" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
   </div>
 </div>
 
 <!-- ══ PAGE: 管理 ══ -->
-<div id="page-admin" class="page">
-  <div id="adminFbAlert" class="card" style="display:none;">
-    <div style="text-align:center;color:var(--muted);font-size:14px;">⚠️ 请先在「设置」页配置 Firebase</div>
+<div id="page-mgr" class="page">
+  <div class="card">
+    <div class="card-title">➕ 创建客户聊天室</div>
+    <div class="field">
+      <label>客户姓名</label>
+      <input id="newName" placeholder="例：Juan García" onkeypress="if(event.key==='Enter')createRoom()">
+    </div>
+    <button class="btn btn-blue" onclick="createRoom()">创建并复制链接</button>
   </div>
-  <div id="adminMain" style="display:none;">
-    <div class="card">
-      <div class="card-title">➕ 创建客户聊天室</div>
-      <div class="field">
-        <label>客户姓名</label>
-        <input id="newClientName" placeholder="例：Juan García" onkeypress="if(event.key==='Enter')createRoom()">
-      </div>
-      <button class="btn btn-primary" onclick="createRoom()">创建专属链接</button>
-    </div>
-    <div class="card">
-      <div class="card-title">📋 聊天室列表</div>
-      <div id="roomsList"><div class="empty-state">暂无房间，先创建一个吧</div></div>
-    </div>
-  </div>
-
-  <!-- 管理员聊天面板 -->
-  <div id="adminChatPanel" style="display:none;position:fixed;inset:0;z-index:200;background:var(--surface);">
-    <div class="chat-wrap">
-      <div class="chat-header">
-        <div>
-          <div style="font-weight:600;" id="chatPanelTitle">客户聊天</div>
-          <div style="font-size:11px;opacity:.7;">🔵 蓝色=你(ES) &nbsp; 🟢 绿色=客户(ZH)</div>
-        </div>
-        <button style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;" onclick="closeAdminChat()">✕ 关闭</button>
-      </div>
-      <div class="msg-list" id="adminMsgList"></div>
-      <!-- 管理员输入区：输入ES实时预览中文 -->
-      <div class="admin-input-area">
-        <div class="admin-trans-preview" id="adminTransPreview">
-          <div class="admin-trans-label">📖 中文对照（客户将看到）</div>
-          <div id="adminTransText">...</div>
-        </div>
-        <div class="admin-input-row">
-          <input id="adminMsgInput" placeholder="输入西班牙语发送给客户..." oninput="onAdminInput()" onkeypress="if(event.key==='Enter')sendAdminMsg()">
-          <button class="mic-btn" id="adminVoiceBtn" onclick="toggleVoice('admin')" title="语音输入(西班牙语)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-          </button>
-          <button class="send-btn" onclick="sendAdminMsg()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
+  <div class="card">
+    <div class="card-title">📋 聊天室列表</div>
+    <div id="roomList"><div class="empty">暂无聊天室</div></div>
   </div>
 </div>
 
 <!-- ══ PAGE: 设置 ══ -->
-<div id="page-settings" class="page">
+<div id="page-cfg" class="page">
   <div class="card">
-    <div class="card-title">🔥 Firebase 配置 <span id="fbStatusBadge" class="status-dot dot-err">未连接</span></div>
-    <div class="field">
-      <label>粘贴 firebaseConfig 内容</label>
-      <textarea id="configInput" rows="5" placeholder='apiKey: "AIzaSy...",
-authDomain: "xxx.firebaseapp.com",
-projectId: "xxx",
-storageBucket: "xxx.appspot.com",
-messagingSenderId: "123456",
-appId: "1:123:web:abc"'></textarea>
+    <div class="card-title">
+      🔥 Firebase 状态
+      <span class="dot dot-ok" id="fbDot">✅ 已连接</span>
     </div>
-    <button class="btn btn-primary" onclick="setupFirebase()">🔌 连接 Firebase</button>
-    <div style="font-size:12px;color:var(--accent);cursor:pointer;margin-top:8px;" onclick="showFbHelp()">📖 如何获取 Firebase 配置？</div>
+    <p style="font-size:13px;color:var(--muted)">Firebase 配置已内置，无需手动配置。任何设备打开都可直接使用。</p>
   </div>
 
   <div class="card">
-    <div class="card-title">📝 自定义话术模板</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">添加你常用的话术，保存后可在「话术」页面编辑使用</p>
-    <div id="customTplList"></div>
-    <button class="btn btn-ghost mt8" onclick="openAddCustomTemplate()">＋ 添加模板</button>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🔗 客户端入口</div>
+    <div class="card-title">🔗 进入聊天室（客户端）</div>
     <div class="field">
       <label>粘贴客服发送的链接</label>
-      <input id="clientRoomLink" placeholder="https://...#room_xxx">
+      <input id="clientLink" placeholder="https://pro-excavator.github.io/...#room_xxx">
     </div>
-    <button class="btn btn-green" onclick="goToClientChat()">💬 进入聊天室</button>
+    <button class="btn btn-green" onclick="goClientChat()">💬 进入聊天室</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 自定义话术</div>
+    <div id="customList"></div>
+    <button class="btn btn-ghost mt8" onclick="openAddTpl()">＋ 添加模板</button>
   </div>
 </div>
 
-<!-- 客户聊天视图 -->
-<div id="clientChatView" style="display:none;position:fixed;inset:0;z-index:300;background:var(--surface);flex-direction:column;">
+<!-- ══ 管理员聊天全屏 ══ -->
+<div id="adminChat" class="overlay">
   <div class="chat-wrap">
-    <div class="chat-header">
+    <div class="chat-hdr">
       <div>
-        <div style="font-weight:600;">🌐 双语翻译客服</div>
-        <div style="font-size:11px;opacity:.7;">🟢 绿色=你(ZH) &nbsp; 🔵 蓝色=客服(ES)</div>
+        <div style="font-weight:600" id="adminChatTitle">客户聊天</div>
+        <div style="font-size:11px;opacity:.7">🔵你(ES) · 🟢客户(ZH)</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div id="clientStatusBadge" style="font-size:12px;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;">⏳ 连接中</div>
-        <button onclick="closeClientChat()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;">✕</button>
+      <button class="chat-hdr-close" onclick="closeAdminChat()">✕ 关闭</button>
+    </div>
+    <div class="msg-list" id="adminMsgs"></div>
+    <div class="admin-input-wrap">
+      <div class="admin-preview" id="adminPrev">
+        <div class="admin-preview-lbl">📖 客户将看到的中文</div>
+        <div id="adminPrevText"></div>
+      </div>
+      <div class="admin-input-row">
+        <input id="adminIn" placeholder="输入西班牙语..." oninput="onAdminIn()" onkeypress="if(event.key==='Enter')sendAdmin()">
+        <button class="dual-mic-btn" id="adminMicZH" onclick="startVoice('admin','zh-CN','adminMicZH')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          🇨🇳
+        </button>
+        <button class="dual-mic-btn" id="adminMicES" onclick="startVoice('admin','es-ES','adminMicES')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          🇪🇸
+        </button>
+        <button class="icon-btn send-btn" onclick="sendAdmin()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+        </button>
       </div>
     </div>
-    <div class="msg-list" id="clientMsgList"></div>
-    <div class="chat-input-bar">
-      <input id="clientMsgInput" placeholder="输入中文，自动翻译给客服..." disabled onkeypress="if(event.key==='Enter')sendClientMsg()">
-      <button class="mic-btn" id="clientVoiceBtn" onclick="toggleVoice('client')" title="语音输入">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
-      </button>
-      <button class="send-btn" id="clientSendBtn" disabled onclick="sendClientMsg()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+  </div>
+</div>
+
+<!-- ══ 客户聊天全屏 ══ -->
+<div id="clientChat" class="overlay">
+  <div class="chat-wrap">
+    <div class="chat-hdr">
+      <div>
+        <div style="font-weight:600">🌐 双语翻译客服</div>
+        <div style="font-size:11px;opacity:.7">🟢你(ZH) · 🔵客服(ES)</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="clientStatus" style="font-size:12px;background:rgba(255,255,255,.15);padding:4px 11px;border-radius:20px">⏳ 连接中</div>
+        <button class="chat-hdr-close" onclick="closeClientChat()">✕</button>
+      </div>
+    </div>
+    <div class="msg-list" id="clientMsgs"></div>
+    <div class="client-input-wrap">
+      <input id="clientIn" placeholder="输入中文，自动翻译给客服..." disabled onkeypress="if(event.key==='Enter')sendClient()">
+      <button class="dual-mic-btn" id="clientMicZH" onclick="startVoice('client','zh-CN','clientMicZH')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          🇨🇳
+        </button>
+        <button class="dual-mic-btn" id="clientMicES" onclick="startVoice('client','es-ES','clientMicES')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>
+          🇪🇸
+        </button>
+      <button class="icon-btn send-btn" id="clientSend" disabled onclick="sendClient()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="m22 2-11 11M22 2 15 22l-4-9-9-4 20-7z"/></svg>
       </button>
     </div>
   </div>
 </div>
 
-<!-- 模板编辑弹窗 -->
-<div id="tplEditModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeTplModal()">
-  <div class="modal-box">
-    <div class="modal-title">
+<!-- ══ 模板编辑弹窗 ══ -->
+<div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hdr">
       <span id="modalTitle">编辑模板</span>
-      <button class="modal-close" onclick="closeTplModal()">✕</button>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="field"><label>模板名称</label><input id="editTplName" placeholder="模板名称"></div>
-    <div class="field"><label>图标（emoji）</label><input id="editTplIcon" placeholder="📝" style="max-width:80px;"></div>
-    <div class="field"><label>中文内容（{name} 等占位符）</label><textarea id="editTplZh" rows="5"></textarea></div>
-    <div class="field"><label>西班牙语内容</label><textarea id="editTplEs" rows="5"></textarea></div>
+    <div class="field"><label>名称</label><input id="mName"></div>
+    <div class="field"><label>图标</label><input id="mIcon" style="max-width:80px"></div>
+    <div class="field"><label>中文内容（{name} 等占位符）</label><textarea id="mZh" rows="5"></textarea></div>
+    <div class="field"><label>西班牙语内容</label><textarea id="mEs" rows="5"></textarea></div>
     <div class="field">
-      <label>变量列表（每行一个，格式：key|标签|示例）</label>
-      <textarea id="editTplFields" rows="4" placeholder="name|客户姓名|Sr. García&#10;product|产品名称|XX系列"></textarea>
+      <label>变量（每行：key|标签|示例）</label>
+      <textarea id="mFields" rows="4" placeholder="name|客户姓名|Sr. García&#10;product|产品名|XX系列"></textarea>
     </div>
     <div class="btn-row mt12">
-      <button class="btn btn-ghost" onclick="closeTplModal()">取消</button>
-      <button class="btn btn-primary" onclick="saveTplModal()">✅ 保存</button>
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-blue" onclick="saveModal()">✅ 保存</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ══ STATE ══
-// ══ FIREBASE HARDCODED CONFIG ══
-const FIREBASE_CONFIG={
-  apiKey:"AIzaSyA8LLIU_vxZ2AS14MDAvGzQRViJ3R--FXY",
-  authDomain:"emp-task-system.firebaseapp.com",
-  projectId:"emp-task-system",
-  storageBucket:"emp-task-system.firebasestorage.app",
-  messagingSenderId:"97538682585",
-  appId:"1:97538682585:web:28c9bf58ad40efb929d8c8"
-};
+// ══════════════════════════════════════
+//  CONSTANTS & STATE
+// ══════════════════════════════════════
+const CHAT_URL = 'https://pro-excavator.github.io/translator-chat/index.html';
+const clientId = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
 
-let db=null, fbReady=false;
-let langPair={src:'zh',tgt:'es',srcLabel:'🇨🇳 中文',tgtLabel:'🇪🇸 Español'};
-let selectedTpl=null, translatedText='';
-const clientId='user_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
-let adminChatRoomId=null, adminMsgUnsub=null;
-let clientRoomId=null, clientMsgUnsub=null, clientRoomUnsub=null;
-let roomsListener=null;
-let editingTplId=null; // 当前正在编辑的模板id
+let langPair = { src:'zh', tgt:'es', srcL:'🇨🇳 中文', tgtL:'🇪🇸 Español' };
+let selectedTpl = null, transText = '';
+let adminRoomId = null, adminMsgUnsub = null;
+let clientRoomId = null, clientMsgUnsub = null, clientRoomUnsub = null;
+let roomsUnsub = null;
+let editingId = null;
 
-// ══ BUILT-IN TEMPLATES ══
-let builtinTemplates=[
-  {id:'intro',icon:'👋',name:'初次拜访',desc:'自我介绍',
-   langs:{zh:'您好 {name}！我是 {myName}，来自 {company}。\n\n很高兴认识您！我们专注于 {product}，希望能为您的业务提供帮助。\n\n方便安排一次详细沟通吗？',
-          es:'¡Hola {name}! Soy {myName} de {company}.\n\n¡Es un placer conocerle! Nos especializamos en {product} y me encantaría apoyar su negocio.\n\n¿Podríamos coordinar una reunión?'},
-   fields:[{key:'name',label:'客户姓名',ph:'Sr. García'},{key:'myName',label:'我的姓名',ph:'李明'},{key:'company',label:'公司名称',ph:'XX贸易公司'},{key:'product',label:'产品/服务',ph:'进出口贸易'}]},
-  {id:'followup',icon:'📞',name:'跟进回访',desc:'拜访后跟进',
-   langs:{zh:'您好 {name}！\n\n感谢您今天抽出时间与我见面。\n\n如您所知，我们的 {product} 可以帮助您 {benefit}。\n\n期待您的回复！',
-          es:'¡Hola {name}!\n\nGracias por su tiempo hoy.\n\nComo comentamos, nuestro {product} puede ayudarle a {benefit}.\n\n¡Espero su respuesta!'},
-   fields:[{key:'name',label:'客户姓名',ph:'Sr. García'},{key:'product',label:'产品名称',ph:'XX系列'},{key:'benefit',label:'核心价值',ph:'降低成本30%'}]},
-  {id:'quote',icon:'💰',name:'发送报价',desc:'产品报价单',
-   langs:{zh:'您好 {name}！\n\n根据您的需求，为您整理了报价：\n\n📦 产品：{product}\n💵 价格：{price}\n📅 有效期：{valid}\n\n如有疑问请随时联系我！',
-          es:'¡Hola {name}!\n\nAquí tiene nuestra cotización:\n\n📦 Producto: {product}\n💵 Precio: {price}\n📅 Válido hasta: {valid}\n\n¡Cualquier duda, con gusto le atiendo!'},
-   fields:[{key:'name',label:'客户姓名',ph:'Sr. García'},{key:'product',label:'产品名称',ph:'XX系列'},{key:'price',label:'报价',ph:'USD 500/件'},{key:'valid',label:'有效期',ph:'2024-12-31'}]},
-  {id:'appointment',icon:'📅',name:'预约拜访',desc:'确认见面时间',
-   langs:{zh:'您好 {name}！\n\n希望能在 {date} {time} 拜访您，地点：{place}。\n\n我将带上 {material} 供您参考。\n\n请问这个时间方便吗？',
-          es:'¡Hola {name}!\n\nMe gustaría visitarle el {date} a las {time}, en {place}.\n\nLlevaré {material} para su revisión.\n\n¿Le viene bien ese horario?'},
-   fields:[{key:'name',label:'客户姓名',ph:'Sr. García'},{key:'date',label:'日期',ph:'15 de dic'},{key:'time',label:'时间',ph:'10:00am'},{key:'place',label:'地点',ph:'Su oficina'},{key:'material',label:'携带资料',ph:'muestras y catálogo'}]},
-  {id:'thanks',icon:'🙏',name:'感谢合作',desc:'成交后致谢',
-   langs:{zh:'您好 {name}！\n\n非常感谢您选择与我们合作！\n\n您的订单 {order} 已经确认，我们会在 {date} 前完成 {action}。\n\n如有任何问题，我随时在线为您服务！',
-          es:'¡Hola {name}!\n\n¡Muchas gracias por elegir trabajar con nosotros!\n\nSu pedido {order} ha sido confirmado. Completaremos {action} antes del {date}.\n\n¡Estoy a su disposición!'},
-   fields:[{key:'name',label:'客户姓名',ph:'Sr. García'},{key:'order',label:'订单号/内容',ph:'#001 · 50件'},{key:'date',label:'完成日期',ph:'20 de dic'},{key:'action',label:'下一步行动',ph:'envío'}]},
-  {id:'custom',icon:'✏️',name:'自定义',desc:'自由编写',langs:{zh:'',es:''},fields:[]}
+// ══════════════════════════════════════
+//  BUILT-IN TEMPLATES
+// ══════════════════════════════════════
+let BUILTIN = [
+  { id:'intro', icon:'👋', name:'初次拜访', desc:'自我介绍',
+    langs:{ zh:'您好 {name}！我是 {myName}，来自 {company}。\n\n很高兴认识您！我们专注于 {product}，希望为您提供帮助。\n\n方便安排一次沟通吗？',
+            es:'¡Hola {name}! Soy {myName} de {company}.\n\n¡Encantado de conocerle! Nos especializamos en {product} y me gustaría apoyar su negocio.\n\n¿Podríamos coordinar una reunión?' },
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'myName',l:'我的姓名',p:'李明'},{k:'company',l:'公司',p:'XX贸易'},{k:'product',l:'产品/服务',p:'进出口'}] },
+
+  { id:'followup', icon:'📞', name:'跟进回访', desc:'拜访后跟进',
+    langs:{ zh:'您好 {name}！\n\n感谢今天的会面。\n\n我们的 {product} 可以帮您 {benefit}。\n\n期待您的回复！',
+            es:'¡Hola {name}!\n\nGracias por su tiempo hoy.\n\nNuestro {product} puede ayudarle a {benefit}.\n\n¡Espero su respuesta!' },
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'product',l:'产品',p:'XX系列'},{k:'benefit',l:'价值',p:'节省30%成本'}] },
+
+  { id:'quote', icon:'💰', name:'发送报价', desc:'报价单',
+    langs:{ zh:'您好 {name}！\n\n为您整理报价：\n\n📦 产品：{product}\n💵 价格：{price}\n📅 有效期：{valid}\n\n如有疑问请联系我！',
+            es:'¡Hola {name}!\n\nAquí tiene nuestra cotización:\n\n📦 Producto: {product}\n💵 Precio: {price}\n📅 Válido hasta: {valid}\n\n¡Con gusto le atiendo!' },
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'product',l:'产品',p:'XX系列'},{k:'price',l:'报价',p:'USD 500/件'},{k:'valid',l:'有效期',p:'2024-12-31'}] },
+
+  { id:'appt', icon:'📅', name:'预约拜访', desc:'确认时间',
+    langs:{ zh:'您好 {name}！\n\n希望 {date} {time} 拜访您，地点：{place}。\n\n我会带上 {material}。\n\n时间方便吗？',
+            es:'¡Hola {name}!\n\nMe gustaría visitarle el {date} a las {time} en {place}.\n\nLlevaré {material}.\n\n¿Le viene bien?' },
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'date',l:'日期',p:'15 dic'},{k:'time',l:'时间',p:'10:00am'},{k:'place',l:'地点',p:'Su oficina'},{k:'material',l:'携带资料',p:'muestras'}] },
+
+  { id:'thanks', icon:'🙏', name:'感谢合作', desc:'成交致谢',
+    langs:{ zh:'您好 {name}！\n\n非常感谢您的合作！\n\n订单 {order} 已确认，{date} 前完成 {action}。\n\n随时为您服务！',
+            es:'¡Hola {name}!\n\n¡Gracias por trabajar con nosotros!\n\nSu pedido {order} está confirmado. Completaremos {action} antes del {date}.\n\n¡A su disposición!' },
+    fields:[{k:'name',l:'客户姓名',p:'Sr. García'},{k:'order',l:'订单',p:'#001'},{k:'date',l:'日期',p:'20 dic'},{k:'action',l:'行动',p:'envío'}] },
+
+  { id:'free', icon:'✏️', name:'自定义', desc:'自由编写', langs:{zh:'',es:''}, fields:[] }
 ];
 
-const quickPhrases=[
+const PHRASES = [
   {zh:'我马上到',es:'Ya voy en camino'},{zh:'等一下',es:'Un momento, por favor'},
   {zh:'多少钱？',es:'¿Cuánto cuesta?'},{zh:'能打折吗？',es:'¿Me puede dar un descuento?'},
   {zh:'太贵了',es:'Es muy caro'},{zh:'好的，同意',es:'Sí, de acuerdo'},
-  {zh:'明天联系',es:'Le contacto mañana'},{zh:'发给我看看',es:'Envíeme para verlo'},
-  {zh:'我们质量有保证',es:'Garantizamos la calidad'},{zh:'可以签合同',es:'Podemos firmar contrato'},
+  {zh:'明天联系',es:'Le contacto mañana'},{zh:'我们质量有保证',es:'Garantizamos la calidad'},
 ];
 
-// ══ PAGE SWITCH ══
-function switchPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelector(`[data-page="${id}"]`).classList.add('active');
-  if(id==='admin') initAdminPage();
-}
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+const esc = s => s ? s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : '';
+const now = () => { const d=new Date(); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); };
 
-// ══ TOAST ══
-function showToast(msg){
+function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// ══ UTILS ══
-function escHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):''}
-function nowTime(){const n=new Date();return n.getHours()+':'+String(n.getMinutes()).padStart(2,'0');}
-
-// ══ TRANSLATE API ══
-async function translateText(text,from,to){
-  if(!text.trim())return text;
+async function xlate(text, from, to){
+  if(!text.trim()) return text;
   try{
-    const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
-    const d=await r.json();
+    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+    const d = await r.json();
     return (d.responseData?.translatedText||text).replace(/\[[a-z]{2}\]/gi,'').trim();
-  }catch(e){return text;}
+  }catch(e){ return text; }
 }
 
-// ══════════════════════════
-//  VOICE INPUT (语音输入)
-// ══════════════════════════
-let voiceRecognition=null, voiceTarget=null, isRecording=false;
+// 自动检测：中文→西班牙语，其他→中文
+function detectAndXlate(text){
+  const isChinese = /[\u4e00-\u9fa5]/.test(text);
+  return isChinese ? xlate(text,'zh','es') : xlate(text,'es','zh');
+}
+function detectLangs(text){
+  return /[\u4e00-\u9fa5]/.test(text)
+    ? {from:'zh', to:'es', label:'📖 ES: '}
+    : {from:'es', to:'zh', label:'📖 ZH: '};
+}
 
-function toggleVoice(target){
+// ══════════════════════════════════════
+//  TEXT TO SPEECH 朗读
+// ══════════════════════════════════════
+function speak(text){
+  if(!text||!text.trim()) return;
+  window.speechSynthesis.cancel();
+  const isChinese=/[一-龥]/.test(text);
+  const lang = isChinese ? 'zh-CN' : 'es-ES';
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = lang;
+  utt.rate = 0.9;
+  window.speechSynthesis.speak(utt);
+}
+
+// ══════════════════════════════════════
+//  PAGE NAVIGATION
+// ══════════════════════════════════════
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelector(`[data-p="${id}"]`).classList.add('active');
+  if(id==='mgr') initMgr();
+}
+
+// ══════════════════════════════════════
+//  VOICE INPUT
+// ══════════════════════════════════════
+let vRec=null, vTarget=null, vBtnId=null, vActive=false;
+
+function startVoice(target, lang, btnId){
   if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
-    showToast('⚠️ 此浏览器不支持语音，请用 Chrome');return;
+    toast('请用 Chrome 或系统浏览器，微信不支持语音');return;
   }
-  if(isRecording&&voiceTarget===target){stopVoice();return;}
-  if(isRecording){stopVoice();}
-  startVoice(target);
+  // 如果当前这个按钮正在录音，点击停止
+  if(vActive && vTarget===target && vBtnId===btnId){
+    vRec&&vRec.stop(); return;
+  }
+  // 停掉之前的录音
+  if(vActive){ vRec&&vRec.stop(); }
+
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  vRec = new SR();
+  vTarget = target;
+  vBtnId = btnId;
+  vRec.lang = lang;
+  vRec.continuous = false;
+  vRec.interimResults = true;
+
+  const langLabel = lang==='zh-CN' ? '🇨🇳 中文' : '🇪🇸 Español';
+
+  vRec.onstart = ()=>{
+    vActive = true;
+    document.getElementById(btnId).classList.add('rec');
+    toast('🎤 ' + langLabel + ' 录音中，说完自动停止...');
+  };
+  vRec.onresult = e=>{
+    const t = Array.from(e.results).map(r=>r[0].transcript).join('');
+    if(target==='tr') document.getElementById('srcText').value = t;
+    else if(target==='admin') document.getElementById('adminIn').value = t;
+    else document.getElementById('clientIn').value = t;
+  };
+  vRec.onend = ()=>{
+    vActive = false;
+    const btn = document.getElementById(btnId);
+    if(btn) btn.classList.remove('rec');
+    if(target==='tr') onSrcInput();
+    if(target==='admin') onAdminIn();
+  };
+  vRec.onerror = e=>{
+    vActive = false;
+    const btn = document.getElementById(btnId);
+    if(btn) btn.classList.remove('rec');
+    if(e.error==='not-allowed') toast('❌ 请允许浏览器使用麦克风');
+    else if(e.error==='no-speech') toast('没听到声音，请靠近话筒重试');
+    else toast('语音错误: ' + e.error);
+  };
+  vRec.start();
 }
 
-function startVoice(target){
-  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-  voiceRecognition=new SpeechRecognition();
-  voiceTarget=target;
-  // 根据场景设置语言
-  voiceRecognition.lang = (target==='admin') ? 'es-ES' : 'zh-CN';
-  voiceRecognition.continuous=false;
-  voiceRecognition.interimResults=true;
-  voiceRecognition.onstart=()=>{
-    isRecording=true;
-    const btn=document.getElementById(target==='trans'?'transVoiceBtn':target==='admin'?'adminVoiceBtn':'clientVoiceBtn');
-    if(btn) btn.classList.add('recording');
-    showToast('🎤 正在录音...'+(target==='admin'?' (西班牙语)':' (中文)'));
-  };
-  voiceRecognition.onresult=(e)=>{
-    const transcript=Array.from(e.results).map(r=>r[0].transcript).join('');
-    if(target==='trans') document.getElementById('srcText').value=transcript;
-    else if(target==='admin') document.getElementById('adminMsgInput').value=transcript;
-    else if(target==='client') document.getElementById('clientMsgInput').value=transcript;
-  };
-  voiceRecognition.onend=()=>{
-    isRecording=false;
-    const btn=document.getElementById(target==='trans'?'transVoiceBtn':target==='admin'?'adminVoiceBtn':'clientVoiceBtn');
-    if(btn) btn.classList.remove('recording');
-    // 录完自动触发逻辑
-    if(target==='trans') onSrcInput();
-    if(target==='admin') onAdminInput();
-  };
-  voiceRecognition.onerror=(e)=>{
-    isRecording=false;
-    const btn=document.getElementById(target==='trans'?'transVoiceBtn':target==='admin'?'adminVoiceBtn':'clientVoiceBtn');
-    if(btn) btn.classList.remove('recording');
-    if(e.error!=='no-speech') showToast('语音识别失败: '+e.error);
-  };
-  voiceRecognition.start();
-}
-
-function stopVoice(){
-  if(voiceRecognition) voiceRecognition.stop();
-  isRecording=false;
-}
-
-// ══════════════════════════
+// ══════════════════════════════════════
 //  WHATSAPP TEMPLATES
-// ══════════════════════════
-function getAllTemplates(){return[...builtinTemplates,...getCustomTemplates()];}
+// ══════════════════════════════════════
+function getCustom(){ try{return JSON.parse(localStorage.getItem('ctpl')||'[]');}catch(e){return[];} }
+function saveCustom(a){ localStorage.setItem('ctpl',JSON.stringify(a)); }
+function allTpls(){ return [...BUILTIN,...getCustom()]; }
 
-function renderTemplates(){
-  const all=getAllTemplates();
-  document.getElementById('tplGrid').innerHTML=all.map(t=>`
-    <div class="tpl-card" id="tc_${t.id}" onclick="selectTemplate('${t.id}')">
-      <button class="tpl-edit-btn" onclick="event.stopPropagation();openTplModal('${t.id}')">✏️ 编辑</button>
+function renderTpls(){
+  document.getElementById('tplGrid').innerHTML=allTpls().map(t=>`
+    <div class="tpl-card" id="tc_${t.id}" onclick="selectTpl('${t.id}')">
+      <button class="tpl-edit" onclick="event.stopPropagation();openEditTpl('${t.id}')">✏️ 编辑</button>
       <div class="tpl-icon">${t.icon}</div>
-      <div class="tpl-name">${escHtml(t.name)}</div>
-      <div class="tpl-desc">${escHtml(t.desc)}</div>
-    </div>
-  `).join('');
+      <div class="tpl-name">${esc(t.name)}</div>
+      <div class="tpl-desc">${esc(t.desc)}</div>
+    </div>`).join('');
 }
 
-function selectTemplate(id){
-  const all=getAllTemplates();
-  selectedTpl=all.find(t=>t.id===id);
-  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('selected'));
-  const el=document.getElementById('tc_'+id);
-  if(el) el.classList.add('selected');
+function selectTpl(id){
+  selectedTpl=allTpls().find(t=>t.id===id);
+  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('sel'));
+  const el=document.getElementById('tc_'+id); if(el) el.classList.add('sel');
 
-  const editorCard=document.getElementById('tplEditorCard');
-  const previewCard=document.getElementById('tplPreviewCard');
+  const editor=document.getElementById('tplEditor');
+  const preview=document.getElementById('tplPreview');
 
-  if(id==='custom'){
-    editorCard.style.display='block';
+  if(id==='free'){
+    editor.style.display='block';
     document.getElementById('tplFields').innerHTML=`
       <div class="field"><label>发送语言</label>
-        <select id="tplLang" onchange="updatePreview()">
-          <option value="es">Español（西班牙语）</option>
-          <option value="zh">中文</option>
-        </select>
+        <select id="tplLang" onchange="updatePrev()"><option value="es">Español</option><option value="zh">中文</option></select>
       </div>
-      <div class="field"><label>消息内容</label>
-        <textarea id="customBody" rows="6" oninput="updatePreview()"></textarea>
-      </div>
-      <div class="field"><label>客户姓名（预览用）</label>
-        <input id="customContact" placeholder="Sr. García" oninput="updatePreview()">
-      </div>`;
-    previewCard.style.display='block';
-    updatePreview();
-    return;
+      <div class="field"><label>内容</label><textarea id="freeBody" rows="6" oninput="updatePrev()"></textarea></div>
+      <div class="field"><label>客户姓名（预览）</label><input id="freeContact" placeholder="Sr. García" oninput="updatePrev()"></div>`;
+    preview.style.display='block'; updatePrev(); return;
   }
-
-  if(selectedTpl&&selectedTpl.fields.length){
-    editorCard.style.display='block';
+  if(selectedTpl&&selectedTpl.fields&&selectedTpl.fields.length){
+    editor.style.display='block';
     document.getElementById('tplFields').innerHTML=`
       <div class="field"><label>发送语言</label>
-        <select id="tplLang" onchange="updatePreview()">
-          <option value="es">Español（西班牙语）</option>
-          <option value="zh">中文</option>
-        </select>
+        <select id="tplLang" onchange="updatePrev()"><option value="es">Español</option><option value="zh">中文</option></select>
       </div>
       ${selectedTpl.fields.map(f=>`
-        <div class="field">
-          <label>${escHtml(f.label)}</label>
-          <input id="f_${f.key}" placeholder="${escHtml(f.ph)}" oninput="updatePreview()">
+        <div class="field"><label>${esc(f.l)}</label>
+          <input id="f_${f.k}" placeholder="${esc(f.p)}" oninput="updatePrev()">
         </div>`).join('')}`;
-    previewCard.style.display='block';
-    updatePreview();
+    preview.style.display='block'; updatePrev();
   }
 }
 
-// 更新预览 + 中文参考
-async function updatePreview(){
+async function updatePrev(){
   if(!selectedTpl) return;
   let lang, body, zhBody, contact;
-
-  if(selectedTpl.id==='custom'){
+  if(selectedTpl.id==='free'){
     lang=document.getElementById('tplLang')?.value||'es';
-    body=document.getElementById('customBody')?.value||'';
-    contact=document.getElementById('customContact')?.value||'客户';
-    zhBody=(lang==='es')?await translateText(body,'es','zh'):body;
+    body=document.getElementById('freeBody')?.value||'';
+    contact=document.getElementById('freeContact')?.value||'客户';
+    zhBody=lang==='es'?await xlate(body,'es','zh'):body;
   } else {
     lang=document.getElementById('tplLang')?.value||'es';
     body=selectedTpl.langs[lang]||'';
     zhBody=selectedTpl.langs['zh']||'';
     contact=document.getElementById('f_name')?.value||'客户';
-    selectedTpl.fields.forEach(f=>{
-      const val=document.getElementById('f_'+f.key)?.value||f.ph;
-      body=body.replace(new RegExp('{'+f.key+'}','g'),val);
-      zhBody=zhBody.replace(new RegExp('{'+f.key+'}','g'),val);
+    (selectedTpl.fields||[]).forEach(f=>{
+      const v=document.getElementById('f_'+f.k)?.value||f.p;
+      body=body.replace(new RegExp('{'+f.k+'}','g'),v);
+      zhBody=zhBody.replace(new RegExp('{'+f.k+'}','g'),v);
     });
   }
-
-  document.getElementById('previewContact').textContent=contact;
-  document.getElementById('previewText').textContent=body;
-  document.getElementById('previewTime').textContent=nowTime();
-
-  // 显示中文参考（如果发送的是西班牙语）
-  const zhWrap=document.getElementById('zhRefWrap');
-  if(lang==='es'&&zhBody){
-    document.getElementById('zhRefText').textContent=zhBody;
-    zhWrap.style.display='block';
-  } else {
-    zhWrap.style.display='none';
-  }
+  document.getElementById('prevContact').textContent=contact;
+  document.getElementById('prevText').textContent=body;
+  document.getElementById('prevTime').textContent=now();
+  const wrap=document.getElementById('zhRefWrap');
+  if(lang==='es'&&zhBody){document.getElementById('zhRefText').textContent=zhBody;wrap.style.display='block';}
+  else wrap.style.display='none';
 }
 
-function getPreviewBody(){return document.getElementById('previewText')?.textContent||'';}
 function copyMsg(){
-  const txt=getPreviewBody();
-  if(!txt){showToast('请先填写内容');return;}
-  navigator.clipboard.writeText(txt);
-  showToast('✅ 已复制到剪贴板');
+  const t=document.getElementById('prevText')?.textContent||'';
+  if(!t){toast('请先填写内容');return;}
+  navigator.clipboard.writeText(t); toast('✅ 已复制');
 }
 function sendWa(){
   const phone=document.getElementById('waPhone').value.replace(/\s+/g,'').replace(/^\+/,'');
-  const txt=getPreviewBody();
-  if(!txt){showToast('请先填写消息内容');return;}
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(txt)}`,'_blank');
+  const t=document.getElementById('prevText')?.textContent||'';
+  if(!t){toast('请先填写内容');return;}
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(t)}`,'_blank');
 }
 
-// ══════════════════════════
-//  TEMPLATE EDIT MODAL
-// ══════════════════════════
-function openTplModal(id){
-  const all=getAllTemplates();
-  const tpl=all.find(t=>t.id===id);
-  if(!tpl) return;
-  editingTplId=id;
-  document.getElementById('modalTitle').textContent=(id.startsWith('ct_')?'编辑自定义模板':'编辑模板：'+tpl.name);
-  document.getElementById('editTplName').value=tpl.name;
-  document.getElementById('editTplIcon').value=tpl.icon;
-  document.getElementById('editTplZh').value=tpl.langs.zh||'';
-  document.getElementById('editTplEs').value=tpl.langs.es||'';
-  document.getElementById('editTplFields').value=(tpl.fields||[]).map(f=>`${f.key}|${f.label}|${f.ph}`).join('\n');
-  document.getElementById('tplEditModal').style.display='flex';
-}
-
-function closeTplModal(){document.getElementById('tplEditModal').style.display='none';editingTplId=null;}
-
-function saveTplModal(){
-  if(!editingTplId) return;
-  const name=document.getElementById('editTplName').value.trim();
-  const icon=document.getElementById('editTplIcon').value.trim()||'📝';
-  const zh=document.getElementById('editTplZh').value;
-  const es=document.getElementById('editTplEs').value;
-  const fieldsRaw=document.getElementById('editTplFields').value.trim();
-  const fields=fieldsRaw?fieldsRaw.split('\n').map(l=>{
-    const [key,label,ph]=l.split('|');
-    return{key:(key||'').trim(),label:(label||key||'').trim(),ph:(ph||'').trim()};
-  }).filter(f=>f.key):[];
-
-  const isBuiltin=builtinTemplates.find(t=>t.id===editingTplId);
-  if(isBuiltin){
-    // 编辑内置模板：直接修改内存中的对象
-    isBuiltin.name=name; isBuiltin.icon=icon;
-    isBuiltin.langs={zh,es}; isBuiltin.fields=fields;
-    // 同时保存到localStorage以持久化
-    const overrides=JSON.parse(localStorage.getItem('tplOverrides')||'{}');
-    overrides[editingTplId]={name,icon,langs:{zh,es},fields};
-    localStorage.setItem('tplOverrides',JSON.stringify(overrides));
-  } else {
-    // 自定义模板
-    const arr=getCustomTemplates();
-    const idx=arr.findIndex(t=>t.id===editingTplId);
-    if(idx>=0){
-      arr[idx]={...arr[idx],name,icon,langs:{zh,es},fields};
-      saveCustomTemplates(arr);
-    }
-  }
-
-  closeTplModal();
-  renderTemplates();
-  renderCustomTplList();
-  showToast('✅ 模板已保存');
-}
-
-// ══════════════════════════
-//  TRANSLATOR PAGE
-// ══════════════════════════
+// ══════════════════════════════════════
+//  TRANSLATOR
+// ══════════════════════════════════════
 function renderPhrases(){
-  document.getElementById('phrasesGrid').innerHTML=quickPhrases.map(p=>`
+  document.getElementById('phrases').innerHTML=PHRASES.map(p=>`
     <div class="tpl-card" onclick="quickPhrase('${p.zh.replace(/'/g,"\\'")}','${p.es.replace(/'/g,"\\'")}')">
-      <div style="font-size:12px;font-weight:600;color:var(--text)">${escHtml(p.zh)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(p.es)}</div>
+      <div style="font-size:12px;font-weight:600">${esc(p.zh)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(p.es)}</div>
     </div>`).join('');
 }
 
@@ -727,392 +688,350 @@ function quickPhrase(zh,es){
   const body=langPair.src==='zh'?zh:es;
   const trans=langPair.src==='zh'?es:zh;
   document.getElementById('srcText').value=body;
-  translatedText=trans;
-  document.getElementById('transOutput').textContent=trans;
-  document.getElementById('translateResult').style.display='block';
+  transText=trans;
+  document.getElementById('trOut').textContent=trans;
+  document.getElementById('trResult').style.display='block';
 }
 
 function swapLang(){
   langPair=langPair.src==='zh'
-    ?{src:'es',tgt:'zh',srcLabel:'🇪🇸 Español',tgtLabel:'🇨🇳 中文'}
-    :{src:'zh',tgt:'es',srcLabel:'🇨🇳 中文',tgtLabel:'🇪🇸 Español'};
-  document.getElementById('srcLang').textContent=langPair.srcLabel;
-  document.getElementById('tgtLang').textContent=langPair.tgtLabel;
+    ?{src:'es',tgt:'zh',srcL:'🇪🇸 Español',tgtL:'🇨🇳 中文'}
+    :{src:'zh',tgt:'es',srcL:'🇨🇳 中文',tgtL:'🇪🇸 Español'};
+  document.getElementById('srcLang').textContent=langPair.srcL;
+  document.getElementById('tgtLang').textContent=langPair.tgtL;
   const old=document.getElementById('srcText').value;
-  document.getElementById('srcText').value=translatedText;
-  translatedText=old;
-  document.getElementById('transOutput').textContent=translatedText;
+  document.getElementById('srcText').value=transText;
+  transText=old;
+  document.getElementById('trOut').textContent=transText;
 }
 
 async function doTranslate(){
   const text=document.getElementById('srcText').value.trim();
-  if(!text){showToast('请输入要翻译的文字');return;}
-  document.getElementById('transOutput').textContent='翻译中...';
-  document.getElementById('translateResult').style.display='block';
-  translatedText=await translateText(text,langPair.src,langPair.tgt);
-  document.getElementById('transOutput').textContent=translatedText;
+  if(!text){toast('请输入文字');return;}
+  document.getElementById('trOut').textContent='翻译中...';
+  document.getElementById('trResult').style.display='block';
+  transText=await xlate(text,langPair.src,langPair.tgt);
+  document.getElementById('trOut').textContent=transText;
 }
 
 let srcTimer;
 function onSrcInput(){clearTimeout(srcTimer);srcTimer=setTimeout(doTranslate,900);}
-function copyTrans(){navigator.clipboard.writeText(translatedText);showToast('✅ 已复制');}
+function copyTrans(){navigator.clipboard.writeText(transText);toast('✅ 已复制');}
 function sendTransWa(){
   const phone=prompt('输入 WhatsApp 号码（含区号，如 +57300...）')||'';
   if(!phone) return;
-  window.open(`https://wa.me/${phone.replace(/\s+/g,'').replace(/^\+/,'')}?text=${encodeURIComponent(translatedText)}`,'_blank');
+  window.open(`https://wa.me/${phone.replace(/\s+/g,'').replace(/^\+/,'')}?text=${encodeURIComponent(transText)}`,'_blank');
 }
 function sendToChat(){
-  if(!clientRoomId){showToast('请先进入聊天室');return;}
-  sendClientMsg(translatedText);
+  if(!clientRoomId){toast('请先进入聊天室');return;}
+  sendClient(transText);
 }
 
-// ══════════════════════════
-//  FIREBASE
-// ══════════════════════════
-function parseConfig(raw){
-  try{
-    let j=raw.replace(/\/\/.*$/gm,'').replace(/(\w+):/g,'"$1":');
-    const c=JSON.parse(j);
-    if(c.apiKey&&c.projectId) return c;
-  }catch(e){}
-  const c={};
-  ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'].forEach(k=>{
-    const m=raw.match(new RegExp(k+`["']?\\s*:\\s*["']([^"']+)["']`,'i'));
-    if(m) c[k]=m[1];
-  });
-  return(c.apiKey&&c.projectId)?c:null;
-}
-
-async function setupFirebase(config){
-  // 优先使用传入的config，否则用硬编码配置，最后才读textarea
-  if(!config){
-    const raw=document.getElementById('configInput').value.trim();
-    config=raw?parseConfig(raw):null;
-  }
-  if(!config) config=FIREBASE_CONFIG;
-  const badge=document.getElementById('fbStatusBadge');
-  badge.textContent='连接中...'; badge.className='status-dot dot-wait';
-  try{
-    if(firebase.apps.length) await firebase.apps[0].delete();
-    firebase.initializeApp(config);
-    db=firebase.firestore();
-    await db.collection('_test').doc('_test').set({t:Date.now()});
-    fbReady=true;
-    badge.textContent='✅ 已连接'; badge.className='status-dot dot-ok';
-    showToast('✅ Firebase 已连接');
-  }catch(e){
-    badge.textContent='❌ 连接失败'; badge.className='status-dot dot-err';
-    showToast('❌ '+(e.message.includes('permission')?'Firestore 权限错误，请设为测试模式':e.message.substring(0,60)));
-  }
-}
-
-function showFbHelp(){
-  alert(`获取 Firebase 配置步骤：
-
-1. 访问 console.firebase.google.com
-2. 登录并选择项目
-3. 点击「项目设置」⚙️
-4. 找到「您的应用」→ Web 应用 (</>)
-5. 复制 firebaseConfig 内容
-
-⚠️ 还需开启 Firestore：
-左侧「Firestore Database」→ 创建数据库 → 选「测试模式」`);
-}
-
-// ══════════════════════════
-//  ADMIN PAGE
-// ══════════════════════════
-function initAdminPage(){
-  if(!fbReady){
-    document.getElementById('adminFbAlert').style.display='block';
-    document.getElementById('adminMain').style.display='none';
-    return;
-  }
-  document.getElementById('adminFbAlert').style.display='none';
-  document.getElementById('adminMain').style.display='block';
-  listenRooms();
-}
-
-function listenRooms(){
-  if(roomsListener) roomsListener();
-  roomsListener=db.collection('customerRooms').orderBy('createdAt','desc').onSnapshot(snap=>{
+// ══════════════════════════════════════
+//  ADMIN: ROOM MANAGEMENT
+// ══════════════════════════════════════
+function initMgr(){
+  if(roomsUnsub) roomsUnsub();
+  roomsUnsub=db.collection('customerRooms').orderBy('createdAt','desc').onSnapshot(snap=>{
     const rooms=snap.docs.map(d=>({id:d.id,...d.data()}));
-    const el=document.getElementById('roomsList');
-    if(!rooms.length){el.innerHTML='<div class="empty-state">暂无房间</div>';return;}
+    const el=document.getElementById('roomList');
+    if(!rooms.length){el.innerHTML='<div class="empty">暂无聊天室，创建一个吧</div>';return;}
     el.innerHTML=rooms.map(r=>{
-      const isOpen=r.isOpen||false;
-      const link=r.roomLink||CHAT_BASE_URL+'#'+r.roomId;
+      const isOn=r.isOpen||false;
+      const link=r.roomLink||`${CHAT_URL}#${r.roomId}`;
       return`<div class="room-item">
-        <div class="room-header">
-          <div class="room-name">👤 ${escHtml(r.clientName)}</div>
-          <div class="toggle-pill" onclick="toggleRoom('${r.roomId}',${isOpen})">
-            <span class="badge ${isOpen?'badge-open':'badge-closed'}">${isOpen?'开启中':'已关闭'}</span>
-            <div class="pill-track ${isOpen?'on':''}"></div>
+        <div class="room-hdr">
+          <div class="room-name">👤 ${esc(r.clientName)}</div>
+          <div class="toggle-pill" onclick="toggleRoom('${r.roomId}',${isOn})">
+            <span class="badge ${isOn?'badge-on':'badge-off'}">${isOn?'开启中':'已关闭'}</span>
+            <div class="pill ${isOn?'on':''}"></div>
           </div>
         </div>
-        <div class="room-link-box">🔗 ${escHtml(link)}</div>
-        <div class="room-actions">
-          <button class="btn btn-ghost btn-sm" onclick="copyRoomLink('${escHtml(link)}')">📋 复制链接</button>
-          <button class="btn btn-primary btn-sm" onclick="openAdminChat('${r.roomId}','${escHtml(r.clientName)}')">💬 进入聊天</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteRoom('${r.roomId}','${escHtml(r.clientName)}')">🗑️</button>
+        <div class="room-link">🔗 ${esc(link)}</div>
+        <div class="room-acts">
+          <button class="btn btn-ghost btn-sm" onclick="copyLink('${esc(link)}')">📋 复制链接</button>
+          <button class="btn btn-blue btn-sm" onclick="openAdminChat('${r.roomId}','${esc(r.clientName)}')">💬 进入聊天</button>
+          <button class="btn btn-red btn-sm" onclick="delRoom('${r.roomId}','${esc(r.clientName)}')">🗑️</button>
         </div>
       </div>`;
     }).join('');
-  });
+  },err=>toast('加载失败:'+err.message));
 }
-
-const CHAT_BASE_URL='https://pro-excavator.github.io/translator-chat/index.html';
 
 async function createRoom(){
-  const name=document.getElementById('newClientName').value.trim();
-  if(!name){showToast('请输入客户姓名');return;}
+  const name=document.getElementById('newName').value.trim();
+  if(!name){toast('请输入客户姓名');return;}
   const roomId='room_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);
-  const link=CHAT_BASE_URL+'#'+roomId;
+  const link=`${CHAT_URL}#${roomId}`;
   try{
     await db.collection('customerRooms').doc(roomId).set({
-      roomId,clientName:name,
+      roomId, clientName:name,
       createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-      isOpen:false,roomLink:link
+      isOpen:false, roomLink:link
     });
-    document.getElementById('newClientName').value='';
+    document.getElementById('newName').value='';
     navigator.clipboard.writeText(link);
-    showToast('✅ 已创建并复制链接');
-  }catch(e){showToast('❌ 创建失败: '+e.message.substring(0,40));}
+    toast('✅ 已创建并复制链接');
+  }catch(e){toast('❌ 创建失败:'+e.message.substring(0,50));}
 }
 
-async function toggleRoom(roomId,cur){
-  try{await db.collection('customerRooms').doc(roomId).update({isOpen:!cur});}
-  catch(e){showToast('❌ '+e.message.substring(0,40));}
+async function toggleRoom(id,cur){
+  try{await db.collection('customerRooms').doc(id).update({isOpen:!cur});}
+  catch(e){toast('❌ '+e.message.substring(0,40));}
 }
 
-async function deleteRoom(roomId,name){
+async function delRoom(id,name){
   if(!confirm(`删除「${name}」的房间？`)) return;
-  try{await db.collection('customerRooms').doc(roomId).delete();}
-  catch(e){showToast('❌ '+e.message.substring(0,40));}
+  try{await db.collection('customerRooms').doc(id).delete();}
+  catch(e){toast('❌ '+e.message.substring(0,40));}
 }
 
-function copyRoomLink(link){navigator.clipboard.writeText(link);showToast('✅ 已复制链接');}
+function copyLink(link){navigator.clipboard.writeText(link);toast('✅ 已复制链接');}
 
-// ══════════════════════════
-//  ADMIN CHAT（双色气泡 + 中文预览）
-// ══════════════════════════
-function openAdminChat(roomId,clientName){
-  adminChatRoomId=roomId;
-  document.getElementById('chatPanelTitle').textContent='👤 '+clientName;
-  document.getElementById('adminChatPanel').style.display='block';
-  document.getElementById('adminMsgList').innerHTML='';
-  addSysMsg(document.getElementById('adminMsgList'),'🔗 正在连接...');
+// ══════════════════════════════════════
+//  ADMIN CHAT
+// ══════════════════════════════════════
+function openAdminChat(roomId, clientName){
+  adminRoomId=roomId;
+  document.getElementById('adminChatTitle').textContent='👤 '+clientName;
+  document.getElementById('adminChat').classList.add('show');
+  document.getElementById('adminMsgs').innerHTML='';
   if(adminMsgUnsub) adminMsgUnsub();
   adminMsgUnsub=db.collection('customerRooms').doc(roomId).collection('messages')
     .orderBy('timestamp','asc').onSnapshot(snap=>{
-      snap.docChanges().forEach(ch=>{if(ch.type==='added') renderChatMsg(ch.doc.data(),'adminMsgList');});
+      snap.docChanges().forEach(ch=>{if(ch.type==='added') addBubble(ch.doc.data(),'adminMsgs',true);});
     });
 }
 
-// 管理员输入框实时预览中文对照
-let adminTransTimer;
-function onAdminInput(){
-  const txt=document.getElementById('adminMsgInput').value.trim();
-  const preview=document.getElementById('adminTransPreview');
-  if(!txt){preview.style.display='none';return;}
-  preview.style.display='block';
-  document.getElementById('adminTransText').textContent='翻译中...';
-  clearTimeout(adminTransTimer);
-  adminTransTimer=setTimeout(async()=>{
-    const zh=await translateText(txt,'es','zh');
-    document.getElementById('adminTransText').textContent=zh;
+let adminTimer;
+// 管理员可以输中文或西班牙语
+// 逻辑：自动翻成ES发送，同时预览客户看到的ZH
+function onAdminIn(){
+  const t=document.getElementById('adminIn').value.trim();
+  const prev=document.getElementById('adminPrev');
+  if(!t){prev.style.display='none';return;}
+  prev.style.display='block';
+  document.getElementById('adminPrevText').textContent='翻译中...';
+  clearTimeout(adminTimer);
+  adminTimer=setTimeout(async()=>{
+    const trans = await detectAndXlate(t);
+    const {label} = detectLangs(t);
+    document.getElementById('adminPrevText').textContent = label + trans;
   },600);
 }
 
-async function sendAdminMsg(){
-  const txt=document.getElementById('adminMsgInput').value.trim();
-  if(!txt||!adminChatRoomId) return;
-  document.getElementById('adminMsgInput').value='';
-  document.getElementById('adminTransPreview').style.display='none';
-  const zhTrans=await translateText(txt,'es','zh');
-  await db.collection('customerRooms').doc(adminChatRoomId).collection('messages').add({
-    role:'admin',originalText:txt,translatedText:zhTrans,senderId:'admin',timestamp:new Date()
+async function sendAdmin(){
+  const t=document.getElementById('adminIn').value.trim();
+  if(!t||!adminRoomId) return;
+  document.getElementById('adminIn').value='';
+  document.getElementById('adminPrev').style.display='none';
+  const trans = await detectAndXlate(t);
+  await db.collection('customerRooms').doc(adminRoomId).collection('messages').add({
+    role:'admin', originalText:t, translatedText:trans, senderId:'admin', timestamp:new Date()
   });
 }
 
 function closeAdminChat(){
-  document.getElementById('adminChatPanel').style.display='none';
+  document.getElementById('adminChat').classList.remove('show');
   if(adminMsgUnsub) adminMsgUnsub();
 }
 
-// 通用气泡渲染（管理员 & 客户端共用，通过 listId 区分）
-function renderChatMsg(d, listId){
-  const isAdmin=d.role==='admin';
-  // 在管理员视图：admin消息=me(右，蓝)，client消息=them(左，绿)
-  // 在客户视图：client消息=me(右，绿)，admin消息=them(左，蓝)
-  let isMe;
-  if(listId==='adminMsgList') isMe=isAdmin;
-  else isMe=!isAdmin; // clientMsgList
-  
-  const el=document.createElement('div');
-  el.className='msg '+(isMe?'me':'them');
-  const senderLabel=isAdmin?'🧑‍💼 客服':'👤 客户';
-  const origLang=isAdmin?'ES':'ZH';
-  const transLang=isAdmin?'→ ZH':'→ ES';
-  el.innerHTML=`<div class="bubble">
-    <div class="bubble-sender">${senderLabel}</div>
-    <div class="bubble-main">${escHtml(d.originalText)}</div>
-    ${d.translatedText?`<div class="bubble-trans">${transLang} ${escHtml(d.translatedText)}</div>`:''}
-    <div class="bubble-time">${nowTime()}</div>
-  </div>`;
-  const list=document.getElementById(listId);
-  list.appendChild(el);
-  list.scrollTop=list.scrollHeight;
-}
-
-// ══════════════════════════
+// ══════════════════════════════════════
 //  CLIENT CHAT
-// ══════════════════════════
-function goToClientChat(){
-  let input=document.getElementById('clientRoomLink').value.trim();
+// ══════════════════════════════════════
+function goClientChat(){
+  let input=document.getElementById('clientLink').value.trim();
   let roomId=input.includes('#')?input.split('#')[1]:input;
   const m=roomId.match(/room_\d+_[a-z0-9]+/);
   if(m) roomId=m[0];
-  if(!roomId||!roomId.startsWith('room_')){showToast('无效链接格式');return;}
-  openClientChatView(roomId);
+  if(!roomId||!roomId.startsWith('room_')){toast('无效链接格式');return;}
+  openClientChat(roomId);
 }
 
-function openClientChatView(roomId){
-  // Firebase is hardcoded — always available, no fbReady gate needed
+function openClientChat(roomId){
   clientRoomId=roomId;
-  document.getElementById('clientChatView').style.display='flex';
-  document.getElementById('clientMsgList').innerHTML='';
-  addSysMsg(document.getElementById('clientMsgList'),'🔗 正在连接...');
+  document.getElementById('clientChat').classList.add('show');
+  document.getElementById('clientMsgs').innerHTML='';
+  addSys(document.getElementById('clientMsgs'),'🔗 正在连接...');
+
   if(clientRoomUnsub) clientRoomUnsub();
   clientRoomUnsub=db.collection('customerRooms').doc(roomId).onSnapshot(doc=>{
-    if(!doc.exists){addSysMsg(document.getElementById('clientMsgList'),'❌ 房间不存在');return;}
-    const isOpen=doc.data().isOpen||false;
-    document.getElementById('clientMsgInput').disabled=!isOpen;
-    document.getElementById('clientSendBtn').disabled=!isOpen;
-    document.getElementById('clientVoiceBtn').style.opacity=isOpen?'1':'0.4';
-    document.getElementById('clientStatusBadge').textContent=isOpen?'🟢 对话已开启':'🔴 等待客服开启';
+    if(!doc.exists){addSys(document.getElementById('clientMsgs'),'❌ 房间不存在');return;}
+    const on=doc.data().isOpen||false;
+    document.getElementById('clientIn').disabled=!on;
+    document.getElementById('clientSend').disabled=!on;
+    document.getElementById('clientMic').style.opacity=on?'1':'0.4';
+    document.getElementById('clientStatus').textContent=on?'🟢 对话已开启':'🔴 等待客服开启';
   });
+
   if(clientMsgUnsub) clientMsgUnsub();
   clientMsgUnsub=db.collection('customerRooms').doc(roomId).collection('messages')
     .orderBy('timestamp','asc').onSnapshot(snap=>{
-      snap.docChanges().forEach(ch=>{if(ch.type==='added') renderChatMsg(ch.doc.data(),'clientMsgList');});
+      snap.docChanges().forEach(ch=>{if(ch.type==='added') addBubble(ch.doc.data(),'clientMsgs',false);});
     });
 }
 
-async function sendClientMsg(overrideText){
-  const txt=overrideText||document.getElementById('clientMsgInput').value.trim();
-  if(!txt||!clientRoomId) return;
-  if(!overrideText) document.getElementById('clientMsgInput').value='';
-  const esTrans=await translateText(txt,'zh','es');
+async function sendClient(overrideText){
+  const t=overrideText||document.getElementById('clientIn').value.trim();
+  if(!t||!clientRoomId) return;
+  if(!overrideText) document.getElementById('clientIn').value='';
+  const trans = await detectAndXlate(t);
   await db.collection('customerRooms').doc(clientRoomId).collection('messages').add({
-    role:'client',senderId:clientId,originalText:txt,translatedText:esTrans,timestamp:new Date()
+    role:'client', senderId:clientId, originalText:t, translatedText:trans, timestamp:new Date()
   });
 }
 
 function closeClientChat(){
-  document.getElementById('clientChatView').style.display='none';
+  document.getElementById('clientChat').classList.remove('show');
   if(clientMsgUnsub) clientMsgUnsub();
   if(clientRoomUnsub) clientRoomUnsub();
 }
 
-function addSysMsg(container,msg){
+// ══════════════════════════════════════
+//  SHARED BUBBLE RENDERER
+//  isAdminView=true → 管理员视图（admin=蓝右, client=绿左）
+//  isAdminView=false → 客户视图（client=绿右, admin=蓝左）
+// ══════════════════════════════════════
+function addBubble(d, listId, isAdminView){
+  const isAdmin = d.role === 'admin';
+  const isMe = isAdminView ? isAdmin : !isAdmin;
+  const el = document.createElement('div');
+  el.className = 'msg ' + (isMe ? 'me' : 'them');
+
+  const senderLabel = isAdminView
+    ? (isAdmin ? '🧑‍💼 我 (ES)' : '👤 客户 (ZH)')
+    : (isAdmin ? '🧑‍💼 客服 (ES)' : '👤 我 (ZH)');
+
+  const isSrcChinese = /[一-龥]/.test(d.originalText || '');
+  const arrow = isSrcChinese ? '📖 ES: ' : '📖 ZH: ';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  const sender = document.createElement('div');
+  sender.className = 'b-sender';
+  sender.textContent = senderLabel;
+  bubble.appendChild(sender);
+
+  const mainText = document.createElement('div');
+  mainText.className = 'b-text';
+  mainText.textContent = d.originalText || '';
+  mainText.style.cursor = 'pointer';
+  mainText.title = '点击朗读';
+  mainText.onclick = function(){ speak(d.originalText || ''); };
+  bubble.appendChild(mainText);
+
+  if(d.translatedText){
+    const trans = document.createElement('div');
+    trans.className = 'b-trans';
+    trans.textContent = arrow + (d.translatedText) + ' 🔊';
+    trans.style.cursor = 'pointer';
+    trans.title = '点击朗读';
+    trans.onclick = function(){ speak(d.translatedText || ''); };
+    bubble.appendChild(trans);
+  }
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'b-time';
+  timeEl.textContent = now();
+  bubble.appendChild(timeEl);
+
+  el.appendChild(bubble);
+  const list = document.getElementById(listId);
+  list.appendChild(el);
+  list.scrollTop = list.scrollHeight;
+}
+
+function addSys(container,msg){
   const el=document.createElement('div');
   el.className='sys-msg'; el.textContent=msg;
   container.appendChild(el);
 }
 
-// ══════════════════════════
-//  CUSTOM TEMPLATES
-// ══════════════════════════
-function getCustomTemplates(){try{return JSON.parse(localStorage.getItem('customTpls')||'[]');}catch(e){return[];}}
-function saveCustomTemplates(arr){localStorage.setItem('customTpls',JSON.stringify(arr));}
-
-function openAddCustomTemplate(){
-  editingTplId='__new__';
-  document.getElementById('modalTitle').textContent='新建自定义模板';
-  document.getElementById('editTplName').value='';
-  document.getElementById('editTplIcon').value='📝';
-  document.getElementById('editTplZh').value='';
-  document.getElementById('editTplEs').value='';
-  document.getElementById('editTplFields').value='name|客户姓名|Sr. García';
-  document.getElementById('tplEditModal').style.display='flex';
+// ══════════════════════════════════════
+//  TEMPLATE MODAL
+// ══════════════════════════════════════
+function openEditTpl(id){
+  const tpl=allTpls().find(t=>t.id===id); if(!tpl) return;
+  editingId=id;
+  document.getElementById('modalTitle').textContent='编辑：'+tpl.name;
+  document.getElementById('mName').value=tpl.name;
+  document.getElementById('mIcon').value=tpl.icon;
+  document.getElementById('mZh').value=tpl.langs.zh||'';
+  document.getElementById('mEs').value=tpl.langs.es||'';
+  document.getElementById('mFields').value=(tpl.fields||[]).map(f=>`${f.k}|${f.l}|${f.p}`).join('\n');
+  document.getElementById('modalBg').classList.add('show');
 }
 
-function saveTplModal(){
-  const name=document.getElementById('editTplName').value.trim();
-  if(!name){showToast('请填写模板名称');return;}
-  const icon=document.getElementById('editTplIcon').value.trim()||'📝';
-  const zh=document.getElementById('editTplZh').value;
-  const es=document.getElementById('editTplEs').value;
-  const fieldsRaw=document.getElementById('editTplFields').value.trim();
-  const fields=fieldsRaw?fieldsRaw.split('\n').filter(l=>l.trim()).map(l=>{
-    const[key,label,ph]=l.split('|');
-    return{key:(key||'').trim(),label:(label||key||'').trim(),ph:(ph||'').trim()};
-  }).filter(f=>f.key):[];
+function openAddTpl(){
+  editingId='__new__';
+  document.getElementById('modalTitle').textContent='新建模板';
+  document.getElementById('mName').value='';
+  document.getElementById('mIcon').value='📝';
+  document.getElementById('mZh').value='';
+  document.getElementById('mEs').value='';
+  document.getElementById('mFields').value='name|客户姓名|Sr. García';
+  document.getElementById('modalBg').classList.add('show');
+}
 
-  if(editingTplId==='__new__'){
-    const arr=getCustomTemplates();
+function closeModal(){ document.getElementById('modalBg').classList.remove('show'); editingId=null; }
+
+function saveModal(){
+  const name=document.getElementById('mName').value.trim();
+  if(!name){toast('请填写名称');return;}
+  const icon=document.getElementById('mIcon').value.trim()||'📝';
+  const zh=document.getElementById('mZh').value;
+  const es=document.getElementById('mEs').value;
+  const fields=(document.getElementById('mFields').value.trim()||'').split('\n').filter(l=>l.trim()).map(l=>{
+    const[k,label,p]=l.split('|');
+    return{k:(k||'').trim(),l:(label||k||'').trim(),p:(p||'').trim()};
+  }).filter(f=>f.k);
+
+  if(editingId==='__new__'){
+    const arr=getCustom();
     arr.push({id:'ct_'+Date.now(),icon,name,desc:'自定义',langs:{zh,es},fields});
-    saveCustomTemplates(arr);
+    saveCustom(arr);
   } else {
-    const isBuiltin=builtinTemplates.find(t=>t.id===editingTplId);
-    if(isBuiltin){
-      isBuiltin.name=name; isBuiltin.icon=icon; isBuiltin.langs={zh,es}; isBuiltin.fields=fields;
-      const ov=JSON.parse(localStorage.getItem('tplOverrides')||'{}');
-      ov[editingTplId]={name,icon,langs:{zh,es},fields};
-      localStorage.setItem('tplOverrides',JSON.stringify(ov));
-    } else {
-      const arr=getCustomTemplates();
-      const idx=arr.findIndex(t=>t.id===editingTplId);
-      if(idx>=0){arr[idx]={...arr[idx],name,icon,langs:{zh,es},fields};saveCustomTemplates(arr);}
+    const b=BUILTIN.find(t=>t.id===editingId);
+    if(b){ Object.assign(b,{name,icon,langs:{zh,es},fields}); }
+    else {
+      const arr=getCustom(), i=arr.findIndex(t=>t.id===editingId);
+      if(i>=0){arr[i]={...arr[i],name,icon,langs:{zh,es},fields};saveCustom(arr);}
     }
   }
-  closeTplModal();
-  renderTemplates();
-  renderCustomTplList();
-  showToast('✅ 模板已保存');
+  closeModal(); renderTpls(); renderCustomList(); toast('✅ 已保存');
 }
 
-function closeTplModal(){document.getElementById('tplEditModal').style.display='none';editingTplId=null;}
-
-function renderCustomTplList(){
-  const arr=getCustomTemplates();
-  document.getElementById('customTplList').innerHTML=arr.length
+function renderCustomList(){
+  const arr=getCustom();
+  document.getElementById('customList').innerHTML=arr.length
     ?arr.map((t,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:14px">${escHtml(t.icon)} ${escHtml(t.name)}</span>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-ghost btn-sm" onclick="openTplModal('${t.id}')">✏️ 编辑</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteCustomTpl(${i})">删除</button>
+        <span style="font-size:14px">${esc(t.icon)} ${esc(t.name)}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditTpl('${t.id}')">✏️</button>
+          <button class="btn btn-red btn-sm" onclick="delCustom(${i})">删除</button>
         </div>
       </div>`).join('')
     :'<div style="font-size:13px;color:var(--muted)">暂无自定义模板</div>';
 }
 
-function deleteCustomTpl(i){
-  const arr=getCustomTemplates();arr.splice(i,1);saveCustomTemplates(arr);
-  renderTemplates();renderCustomTplList();
-  showToast('已删除');
-}
+function delCustom(i){const a=getCustom();a.splice(i,1);saveCustom(a);renderTpls();renderCustomList();}
 
-// ══ INIT ══
-async function init(){
-  // 恢复内置模板的自定义覆盖
-  const ov=JSON.parse(localStorage.getItem('tplOverrides')||'{}');
-  Object.entries(ov).forEach(([id,data])=>{
-    const tpl=builtinTemplates.find(t=>t.id===id);
-    if(tpl) Object.assign(tpl,data);
-  });
-
-  renderTemplates();
+// ══════════════════════════════════════
+//  INIT — 检查 URL hash，直接进客户聊天
+// ══════════════════════════════════════
+function init(){
+  renderTpls();
   renderPhrases();
-  renderCustomTplList();
+  renderCustomList();
 
-  // 等待 Firebase 初始化完成再做任何操作
-  await setupFirebase(FIREBASE_CONFIG);
-
-  // 有 hash 说明是客户通过链接进入，直接打开聊天室
+  // 如果 URL 有 #room_xxx，直接打开客户聊天室
   const hash=location.hash.substring(1);
-  if(hash&&hash.startsWith('room_')) openClientChatView(hash);
+  if(hash && hash.startsWith('room_')){
+    // 隐藏底部导航，全屏显示聊天
+    document.getElementById('nav').style.display='none';
+    openClientChat(hash);
+  }
 }
 
 init();
