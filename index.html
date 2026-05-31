@@ -21,6 +21,7 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --brand:#1a1a2e;--accent:#4f8ef7;--green:#22c27a;--wa:#25D366;
@@ -462,6 +463,24 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 <div id="modalBg" class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="modal-hdr"><span id="modalTitle">编辑模板</span><button class="modal-close" onclick="closeModal()">✕</button></div><div class="field"><label>名称</label><input id="mName"></div><div class="field"><label>图标</label><input id="mIcon" style="max-width:80px"></div><div class="field"><label>中文内容</label><textarea id="mZh" rows="5"></textarea></div><div class="field"><label>西班牙语内容</label><textarea id="mEs" rows="5"></textarea></div><div class="field"><label>变量（每行：key|标签|示例）</label><textarea id="mFields" rows="4" placeholder="name|客户姓名|Sr. García&#10;product|产品名|XX系列"></textarea></div><div class="btn-row mt12"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-blue" onclick="saveModal()">✅ 保存</button></div></div></div>
 <div id="phraseModalBg" class="modal-bg" onclick="if(event.target===this)closePhraseModal()"><div class="modal"><div class="modal-hdr"><span>添加快速短语</span><button class="modal-close" onclick="closePhraseModal()">✕</button></div><div class="field"><label>中文</label><input id="pZh"></div><div class="field"><label>西班牙语</label><input id="pEs"></div><div class="btn-row"><button class="btn btn-ghost" onclick="closePhraseModal()">取消</button><button class="btn btn-blue" onclick="savePhrase()">✅ 保存</button></div></div></div>
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightboxImg"></div>
+
+<!-- QR码弹窗 -->
+<div id="qrModalBg" class="modal-bg" onclick="if(event.target===this)closeQr()">
+  <div class="modal" style="text-align:center">
+    <div class="modal-hdr">
+      <span id="qrModalTitle">客户二维码</span>
+      <button class="modal-close" onclick="closeQr()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="qrModalDesc">客户扫码直接进入聊天室</div>
+    <div id="qrCanvas" style="display:flex;justify-content:center;margin-bottom:16px"></div>
+    <div style="font-size:11px;color:var(--muted);word-break:break-all;background:var(--surface);padding:8px;border-radius:10px;margin-bottom:14px" id="qrLinkText"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeQr()">关闭</button>
+      <button class="btn btn-blue" onclick="downloadQr()">⬇️ 保存图片</button>
+      <button class="btn btn-ghost" onclick="copyQrLink()">📋 复制链接</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1061,7 +1080,8 @@ function initMgr(){
         <div class="room-link">🔗 ${esc(link)}</div>
         <div class="room-acts">
           <button class="btn btn-ghost btn-sm" onclick="copyLink('${esc(link)}')">📋 复制</button>
-          <button class="btn btn-blue btn-sm" onclick="openAdminChat('${r.roomId}','${esc(r.clientName)}')">💬 聊天${hasNew?' 🔴':''}</button>
+          <button class="btn btn-green btn-sm" onclick="showQr('${esc(link)}','${esc(r.clientName)}')">📷 二维码</button>
+          <button class="btn btn-blue btn-sm" onclick="openAdminChat('${r.roomId}','${esc(r.clientName)}')">💬 进入${hasNew?' 🔴':''}</button>
           <button class="btn btn-red btn-sm" onclick="delRoom('${r.roomId}','${esc(r.clientName)}')">🗑️</button>
         </div>
       </div>`;
@@ -1268,6 +1288,88 @@ function exportChat(role){ const logs=chatLog[role]; if(!logs||!logs.length){toa
 
 function openLightbox(src){ document.getElementById('lightboxImg').src=src; document.getElementById('lightbox').classList.add('show'); }
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); }
+
+// ═══════════════════════════════════════
+//  QR CODE 二维码（用 qrcode.js）
+// ═══════════════════════════════════════
+let currentQrLink = '';
+
+function showQr(link, clientName){
+  currentQrLink = link;
+  document.getElementById('qrModalTitle').textContent = '📷 ' + clientName + ' 的二维码';
+  document.getElementById('qrModalDesc').textContent = '客户扫码直接进入聊天室，无需密码';
+  document.getElementById('qrLinkText').textContent = link;
+  document.getElementById('qrModalBg').classList.add('show');
+  renderQr(link);
+}
+
+function renderQr(link){
+  const container = document.getElementById('qrCanvas');
+  container.innerHTML = '';
+  if(typeof QRCode !== 'undefined'){
+    // qrcodejs: new QRCode(element, options)
+    try{
+      new QRCode(container, {
+        text: link,
+        width: 220,
+        height: 220,
+        colorDark: '#1a1a2e',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }catch(e){
+      fallbackQrImg(container, link);
+    }
+  } else {
+    fallbackQrImg(container, link);
+  }
+}
+
+function fallbackQrImg(container, link){
+  // 降级方案：用第三方 QR 图片 API
+  const img = document.createElement('img');
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&ecc=M&data=' + encodeURIComponent(link);
+  img.style.cssText = 'width:220px;height:220px;border-radius:8px;border:1px solid var(--border)';
+  img.alt = 'QR Code';
+  img.onerror = () => { container.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:20px">二维码加载失败，请复制链接发给客户</div>'; };
+  container.appendChild(img);
+}
+
+function closeQr(){
+  document.getElementById('qrModalBg').classList.remove('show');
+}
+
+function copyQrLink(){
+  navigator.clipboard.writeText(currentQrLink);
+  toast('✅ 链接已复制');
+}
+
+async function downloadQr(){
+  const canvas = document.querySelector('#qrCanvas canvas');
+  if(canvas){
+    const link = document.createElement('a');
+    link.download = '聊天室二维码.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('✅ 二维码已保存');
+  } else {
+    // img 方式：直接用 fetch 下载
+    const img = document.querySelector('#qrCanvas img');
+    if(!img){ toast('请稍后再试'); return; }
+    try{
+      const resp = await fetch(img.src);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = '聊天室二维码.png';
+      a.click(); URL.revokeObjectURL(url);
+      toast('✅ 二维码已保存');
+    }catch(e){
+      // 跨域下载失败，提示长按保存
+      toast('请长按图片保存');
+    }
+  }
+}
 
 // ═══════════════════════════════════════
 //  TEMPLATE MODAL
