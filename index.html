@@ -128,17 +128,17 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 .b-time{font-size:10px;opacity:.5;margin-top:3px;text-align:right}
 .b-img{max-width:100%;border-radius:10px;margin-top:6px;cursor:pointer}
 .sys-msg{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
-.chat-wrap{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto}
+.chat-wrap{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:600px;margin:0 auto}
 .chat-hdr{background:var(--brand);color:#fff;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .chat-hdr-close{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px}
 .chat-hdr-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .export-btn{background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.8);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:500}
-.admin-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.admin-input-wrap{background:var(--card);padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));border-top:1px solid var(--border);flex-shrink:0}
 .admin-preview{font-size:12px;color:var(--muted);background:#eef4ff;border-radius:8px;padding:6px 10px;margin-bottom:6px;display:none;line-height:1.5}
 .admin-preview-lbl{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:2px}
 .admin-input-row{display:flex;gap:6px;align-items:center}
 .admin-input-row input{border-radius:30px;flex:1;min-width:0}
-.client-input-wrap{background:var(--card);padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-shrink:0}
+.client-input-wrap{background:var(--card);padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-shrink:0}
 .client-input-wrap input{border-radius:30px;flex:1;min-width:0}
 .icon-btn{border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
 .send-btn{background:var(--accent);color:#fff}
@@ -152,7 +152,7 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 .img-preview-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover}
 .img-preview-name{font-size:12px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .img-preview-del{background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;flex-shrink:0}
-.overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--surface)}
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--surface);overflow:hidden}
 .overlay.show{display:flex;flex-direction:column}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:flex-end;justify-content:center}
 .modal-bg.show{display:flex}
@@ -409,7 +409,10 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 <div id="adminChat" class="overlay">
   <div class="chat-wrap">
     <div class="chat-hdr">
-      <div><div style="font-weight:600" id="adminChatTitle">客户聊天</div><div style="font-size:11px;opacity:.7">🔵你 · 🟢客户</div></div>
+      <div>
+        <div style="font-weight:600" id="adminChatTitle">客户聊天</div>
+        <div style="font-size:11px;opacity:.7" id="adminChatSubtitle">🔵你 · 🟢客户</div>
+      </div>
       <div class="chat-hdr-right">
         <span id="adminDsTag" class="ds-indicator ds-off" style="font-size:10px">MyMemory</span>
         <button class="export-btn" onclick="exportChat('admin')">📤 导出</button>
@@ -737,7 +740,10 @@ function goPage(id){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelector(`[data-p="${id}"]`).classList.add('active');
-  if(id==='mgr'){ initMgr(); newMsgRooms.clear(); updateMgrBadge(); }
+  if(id==='mgr'){
+    // 监听已在 init() 启动，这里只清新消息角标
+    newMsgRooms.clear(); updateMgrBadge();
+  }
 }
 
 function getSrcLang(){ return LANGS[srcCode]?.voice||'zh-CN'; }
@@ -768,16 +774,78 @@ function startVoice(target, lang, btnId){
   if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
     toast('请用 Chrome 或系统浏览器，微信不支持语音'); return;
   }
-  if(vActive&&vTarget===target&&vBtnId===btnId){ vRec&&vRec.stop(); return; }
-  if(vActive) vRec&&vRec.stop();
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  vRec=new SR(); vTarget=target; vBtnId=btnId;
-  vRec.lang=lang; vRec.continuous=false; vRec.interimResults=true;
-  vRec.onstart=()=>{ vActive=true; document.getElementById(btnId)?.classList.add('rec'); toast('🎤 录音中...'); };
-  vRec.onresult=e=>{ const t=Array.from(e.results).map(r=>r[0].transcript).join(''); if(target==='tr') document.getElementById('srcText').value=t; else if(target==='admin') document.getElementById('adminIn').value=t; else document.getElementById('clientIn').value=t; };
-  vRec.onend=()=>{ vActive=false; document.getElementById(btnId)?.classList.remove('rec'); if(target==='tr') onSrcInput(); if(target==='admin') onAdminIn(); };
-  vRec.onerror=e=>{ vActive=false; document.getElementById(btnId)?.classList.remove('rec'); if(e.error==='not-allowed') toast('❌ 请允许麦克风权限'); else if(e.error==='no-speech') toast('没听到声音'); else toast('语音错误: '+e.error); };
-  vRec.start();
+  // 正在录音：点同一个按钮=停止，点其他=停止后启动新的
+  if(vActive){
+    vRec&&vRec.stop();
+    // 等待 onend 触发后再启动（避免 aborted）
+    if(vTarget===target&&vBtnId===btnId) return; // 同一个按钮：只停止
+    // 不同按钮：等 300ms 让上一个完全结束再启动
+    setTimeout(()=>_doStartVoice(target, lang, btnId), 350);
+    return;
+  }
+  _doStartVoice(target, lang, btnId);
+}
+
+function _doStartVoice(target, lang, btnId){
+  // 再次检查，防止竞态
+  if(vActive) return;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  const rec = new SR();
+  vRec = rec; vTarget = target; vBtnId = btnId;
+  rec.lang = lang;
+  rec.continuous = false;
+  rec.interimResults = true;
+  // 手机上 maxAlternatives=1 更稳定
+  rec.maxAlternatives = 1;
+
+  rec.onstart = () => {
+    vActive = true;
+    document.getElementById(btnId)?.classList.add('rec');
+    toast('🎤 录音中，说完会自动停止');
+  };
+
+  rec.onresult = e => {
+    const t = Array.from(e.results).map(r=>r[0].transcript).join('');
+    if(target==='tr') document.getElementById('srcText').value = t;
+    else if(target==='admin') document.getElementById('adminIn').value = t;
+    else document.getElementById('clientIn').value = t;
+  };
+
+  rec.onend = () => {
+    vActive = false;
+    vRec = null;
+    document.getElementById(btnId)?.classList.remove('rec');
+    if(target==='tr') onSrcInput();
+    if(target==='admin') onAdminIn();
+  };
+
+  rec.onerror = e => {
+    vActive = false;
+    vRec = null;
+    document.getElementById(btnId)?.classList.remove('rec');
+    if(e.error==='not-allowed'){
+      toast('❌ 请在浏览器设置中允许麦克风');
+    } else if(e.error==='no-speech'){
+      toast('没听到声音，请靠近话筒重试');
+    } else if(e.error==='aborted'){
+      // aborted 通常是正常停止，不报错
+      // 如果用户主动停止就静默处理
+    } else if(e.error==='network'){
+      toast('网络错误，请检查网络后重试');
+    } else if(e.error==='audio-capture'){
+      toast('❌ 找不到麦克风设备');
+    } else {
+      toast('语音错误: '+e.error);
+    }
+  };
+
+  try {
+    rec.start();
+  } catch(err) {
+    vActive = false; vRec = null;
+    document.getElementById(btnId)?.classList.remove('rec');
+    toast('启动失败，请重试');
+  }
 }
 
 // ═══════════════════════════════════════
@@ -897,11 +965,18 @@ function updateMgrBadge(){
 }
 
 async function getClientIP(){
-  try{
-    const r=await fetch('https://api.ipify.org?format=json');
-    const d=await r.json();
-    return d.ip;
-  }catch(e){ return null; }
+  const apis = [
+    ()=>fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(d=>d.ip),
+    ()=>fetch('https://api.ip.sb/ip').then(r=>r.text()).then(t=>t.trim()),
+    ()=>fetch('https://ipapi.co/ip/').then(r=>r.text()).then(t=>t.trim()),
+  ];
+  for(const api of apis){
+    try{
+      const ip = await Promise.race([api(), new Promise((_,rej)=>setTimeout(()=>rej('timeout'),3000))]);
+      if(ip && ip.includes('.')) return ip;
+    }catch(e){}
+  }
+  return null;
 }
 
 function initMgr(){
@@ -989,15 +1064,39 @@ async function sendClientImg(input){ const file=input.files[0]; if(!file||!clien
 // ═══════════════════════════════════════
 //  ADMIN CHAT
 // ═══════════════════════════════════════
+let adminRoomInfoUnsub = null;
+
 function openAdminChat(roomId, clientName){
   adminRoomId=roomId; chatLog.admin=[];
   newMsgRooms.delete(roomId); updateMgrBadge();
   document.getElementById('adminChatTitle').textContent='👤 '+clientName;
   document.getElementById('adminChat').classList.add('show');
   document.getElementById('adminMsgs').innerHTML='';
+
+  // 实时监听客户在线状态和IP
+  if(adminRoomInfoUnsub) adminRoomInfoUnsub();
+  adminRoomInfoUnsub = db.collection('customerRooms').doc(roomId).onSnapshot(doc=>{
+    if(!doc.exists) return;
+    const data = doc.data();
+    const isOnline = data.clientOnline||false;
+    const ip = data.clientIP||'';
+    const subtitle = document.getElementById('adminChatSubtitle');
+    if(subtitle){
+      let info = isOnline ? '🟢 客户在线' : '⚫ 客户离线';
+      if(ip) info += ' · ' + ip;
+      subtitle.textContent = info;
+    }
+  });
+
   if(adminMsgUnsub) adminMsgUnsub();
   adminMsgUnsub=db.collection('customerRooms').doc(roomId).collection('messages').orderBy('timestamp','asc').onSnapshot(snap=>{
-    snap.docChanges().forEach(ch=>{ if(ch.type==='added'){ const d=ch.doc.data(); chatLog.admin.push(d); addBubble(d,'adminMsgs',true); } });
+    snap.docChanges().forEach(ch=>{
+      if(ch.type==='added'){
+        const d=ch.doc.data();
+        chatLog.admin.push(d);
+        addBubble(d,'adminMsgs',true);
+      }
+    });
   });
 }
 
@@ -1012,7 +1111,7 @@ async function sendAdmin(){
   await db.collection('customerRooms').doc(adminRoomId).collection('messages').add({role:'admin',originalText:t,translatedText:trans,senderId:'admin',timestamp:new Date()});
 }
 
-function closeAdminChat(){ document.getElementById('adminChat').classList.remove('show'); if(adminMsgUnsub) adminMsgUnsub(); adminRoomId=null; }
+function closeAdminChat(){ document.getElementById('adminChat').classList.remove('show'); if(adminMsgUnsub) adminMsgUnsub(); if(adminRoomInfoUnsub) adminRoomInfoUnsub(); adminRoomId=null; }
 
 // ═══════════════════════════════════════
 //  CLIENT CHAT（上报IP和在线状态）
@@ -1025,16 +1124,27 @@ async function openClientChat(roomId){
   document.getElementById('clientMsgs').innerHTML='';
   addSys(document.getElementById('clientMsgs'),'🔗 正在连接...');
 
-  // 上报客户IP和在线状态
+  // 上报客户IP和在线状态（用 set merge 避免权限问题）
   const ip = await getClientIP();
   const updateData = {clientOnline:true, lastClientActive:new Date()};
   if(ip) updateData.clientIP = ip;
-  db.collection('customerRooms').doc(roomId).update(updateData).catch(()=>{});
+  db.collection('customerRooms').doc(roomId).set(updateData, {merge:true}).catch(e=>console.log('IP上报失败:',e));
+
+  // 同时写一条系统消息记录IP（确保管理员能看到）
+  if(ip){
+    db.collection('customerRooms').doc(roomId).collection('messages').add({
+      role:'system', type:'info',
+      originalText:'客户已连接 · IP: '+ip,
+      translatedText:'', senderId:'system', timestamp:new Date()
+    }).catch(()=>{});
+  }
 
   // 离线时更新状态
-  window.addEventListener('beforeunload',()=>{
-    db.collection('customerRooms').doc(roomId).update({clientOnline:false}).catch(()=>{});
-  });
+  const setOffline = ()=>{
+    db.collection('customerRooms').doc(roomId).set({clientOnline:false},{merge:true}).catch(()=>{});
+  };
+  window.addEventListener('beforeunload', setOffline);
+  window.addEventListener('pagehide', setOffline);
 
   if(clientRoomUnsub) clientRoomUnsub();
   clientRoomUnsub=db.collection('customerRooms').doc(roomId).onSnapshot(doc=>{
@@ -1058,11 +1168,11 @@ async function sendClient(overrideText){
   const {trans}=await autoXlate(t);
   await db.collection('customerRooms').doc(clientRoomId).collection('messages').add({role:'client',senderId:clientId,originalText:t,translatedText:trans,timestamp:new Date()});
   // 更新最后消息时间
-  db.collection('customerRooms').doc(clientRoomId).update({lastClientMsg:new Date()}).catch(()=>{});
+  db.collection('customerRooms').doc(clientRoomId).set({lastClientMsg:new Date()},{merge:true}).catch(()=>{});
 }
 
 function closeClientChat(){
-  if(clientRoomId) db.collection('customerRooms').doc(clientRoomId).update({clientOnline:false}).catch(()=>{});
+  if(clientRoomId) db.collection('customerRooms').doc(clientRoomId).set({clientOnline:false},{merge:true}).catch(()=>{});
   document.getElementById('clientChat').classList.remove('show');
   if(clientMsgUnsub) clientMsgUnsub();
   if(clientRoomUnsub) clientRoomUnsub();
@@ -1072,6 +1182,15 @@ function closeClientChat(){
 //  BUBBLE RENDERER
 // ═══════════════════════════════════════
 function addBubble(d, listId, isAdminView){
+  // 系统消息单独渲染
+  if(d.role==='system'){
+    const el=document.createElement('div');
+    el.className='sys-msg';
+    el.textContent = d.originalText||'';
+    const list=document.getElementById(listId);
+    if(list){list.appendChild(el); list.scrollTop=list.scrollHeight;}
+    return;
+  }
   const isAdmin=d.role==='admin', isMe=isAdminView?isAdmin:!isAdmin;
   const el=document.createElement('div'); el.className='msg '+(isMe?'me':'them');
   const senderLabel=isAdminView?(isAdmin?'🧑‍💼 我':'👤 客户'):(isAdmin?'🧑‍💼 客服':'👤 我');
@@ -1111,17 +1230,38 @@ function delCustom(i){ const a=getCustom();a.splice(i,1);saveCustom(a);renderTpl
 // ═══════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════
+// 修复手机键盘弹出导致输入框消失
+function fixChatHeight(){
+  // 用 visualViewport API 动态设置聊天区高度
+  if(window.visualViewport){
+    const setHeight = () => {
+      const h = window.visualViewport.height;
+      document.querySelectorAll('.chat-wrap').forEach(el=>{
+        el.style.height = h + 'px';
+      });
+    };
+    window.visualViewport.addEventListener('resize', setHeight);
+    window.visualViewport.addEventListener('scroll', setHeight);
+    setHeight();
+  }
+}
+
 function init(){
+  fixChatHeight();
   loadApiConfig();
   renderTpls();
   renderPhrases();
   renderCustomList();
   onLangChange();
 
+  // 页面加载时就启动房间监听（不等用户点管理标签）
+  // 这样新消息角标也能实时更新
+  initMgr();
+
   // 客户通过链接进入
   const hash=location.hash.substring(1);
   if(hash&&hash.startsWith('room_')){
-    document.getElementById('lockScreen').style.display='none'; // 客户不需要密码
+    document.getElementById('lockScreen').style.display='none';
     document.getElementById('nav').style.display='none';
     openClientChat(hash);
   }
