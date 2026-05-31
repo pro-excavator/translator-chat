@@ -371,7 +371,7 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
     <div class="field">
       <label>🔑 DeepSeek API Key</label>
       <div style="display:flex;gap:8px">
-        <input type="password" id="deepseekKey" placeholder="sk-..." style="flex:1" oninput="updateDsStatus()">
+        <input type="password" id="deepseekKey" placeholder="sk-..." style="flex:1" oninput="autoSaveKey()">
         <button class="btn btn-ghost btn-sm" onclick="testDeepSeek()">测试</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:4px">
@@ -386,7 +386,7 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 
   <div class="field" style="padding:0 0 12px">
     <label>🎤 语音识别</label>
-    <select id="asrProvider" onchange="saveApiConfig()">
+    <select id="asrProvider" onchange="autoSaveKey()">
       <option value="browser">浏览器内置（免费，仅Chrome）</option>
       <option value="azure">Azure Speech（需配置）</option>
     </select>
@@ -468,7 +468,34 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
 // ═══════════════════════════════════════
 //  CONSTANTS
 // ═══════════════════════════════════════
-const CHAT_URL = window.location.href.split('#')[0];
+const CHAT_URL = window.location.href.split('#')[0].split('?')[0];
+
+// 生成客户链接 — 用 hash 前缀避免 GitHub Pages 的 ? 参数问题
+function makeClientLink(roomId){
+  return CHAT_URL + '#client:' + roomId;
+}
+function makeAdminLink(roomId){
+  return CHAT_URL + '#admin:' + roomId;
+}
+// 判断当前身份
+function getRole(){
+  // 方式1：URL参数 ?role=client
+  const params = new URLSearchParams(window.location.search);
+  const p = params.get('role');
+  if(p) return p;
+  // 方式2：hash 前缀 #client:room_xxx 或 #admin:room_xxx（兼容旧格式）
+  const hash = location.hash.substring(1);
+  if(hash.startsWith('client:')) return 'client';
+  if(hash.startsWith('admin:')) return 'admin';
+  return null;
+}
+
+function getRoomId(){
+  const hash = location.hash.substring(1);
+  // 支持 room_xxx 或 client:room_xxx 格式
+  const m = hash.match(/room_[a-z0-9_]+/);
+  return m ? m[0] : null;
+}
 const clientId = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
 const DEFAULT_PWD = 'admin123';
 
@@ -523,6 +550,19 @@ function doUnlock(){
     document.getElementById('lockScreen').style.display='none';
     document.getElementById('lockError').style.display='none';
     toast('✅ 欢迎回来！');
+    // 检查是否有待打开的聊天室
+    const pending = sessionStorage.getItem('pendingAdminRoom');
+    if(pending){
+      sessionStorage.removeItem('pendingAdminRoom');
+      goPage('mgr');
+      // 找到对应房间名再打开
+      db.collection('customerRooms').doc(pending).get().then(doc=>{
+        if(doc.exists){
+          const name = doc.data().clientName||'客户';
+          openAdminChat(pending, name);
+        }
+      });
+    }
   } else {
     document.getElementById('lockError').style.display='block';
     document.getElementById('lockInput').value='';
@@ -548,6 +588,14 @@ function changePwd(){
 // ═══════════════════════════════════════
 //  API 配置
 // ═══════════════════════════════════════
+function autoSaveKey(){
+  // 输入时实时保存 key，不需要点「保存配置」按钮
+  const key = document.getElementById('deepseekKey').value.trim();
+  if(key) localStorage.setItem('deepseek_key', key);
+  else localStorage.removeItem('deepseek_key');
+  updateDsStatus();
+}
+
 function saveApiConfig(){
   const key = document.getElementById('deepseekKey').value.trim();
   if(key) localStorage.setItem('deepseek_key', key);
@@ -559,8 +607,12 @@ function saveApiConfig(){
 }
 
 function loadApiConfig(){
-  document.getElementById('deepseekKey').value = localStorage.getItem('deepseek_key')||'';
-  document.getElementById('asrProvider').value = localStorage.getItem('asr_provider')||'browser';
+  // 自动从 localStorage 读取并回填，页面刷新后不需要重新填写
+  const key = localStorage.getItem('deepseek_key')||'';
+  const asr = localStorage.getItem('asr_provider')||'browser';
+  document.getElementById('deepseekKey').value = key;
+  document.getElementById('asrProvider').value = asr;
+  // 自动更新状态指示器
   updateDsStatus();
 }
 
@@ -988,7 +1040,7 @@ function initMgr(){
     if(!rooms.length){ el.innerHTML='<div class="empty">暂无聊天室</div>'; return; }
     el.innerHTML=rooms.map(r=>{
       const isOn=r.isOpen||false;
-      const link=r.roomLink||`${CHAT_URL}#${r.roomId}`;
+      const link=r.roomLink||makeClientLink(r.roomId);
       const hasNew=newMsgRooms.has(r.roomId);
       const isOnline=r.clientOnline||false;
       const clientIP=r.clientIP||'';
@@ -1041,7 +1093,7 @@ async function createRoom(){
   const name=document.getElementById('newName').value.trim();
   if(!name){toast('请输入客户姓名');return;}
   const roomId='room_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);
-  const link=`${CHAT_URL}#${roomId}`;
+  const link=makeClientLink(roomId);
   try{
     await db.collection('customerRooms').doc(roomId).set({roomId,clientName:name,createdAt:firebase.firestore.FieldValue.serverTimestamp(),isOpen:false,roomLink:link});
     document.getElementById('newName').value='';
@@ -1258,12 +1310,21 @@ function init(){
   // 这样新消息角标也能实时更新
   initMgr();
 
-  // 客户通过链接进入
-  const hash=location.hash.substring(1);
-  if(hash&&hash.startsWith('room_')){
-    document.getElementById('lockScreen').style.display='none';
-    document.getElementById('nav').style.display='none';
-    openClientChat(hash);
+  // 身份判断：用 getRole() + getRoomId()
+  const role = getRole();
+  const roomId = getRoomId();
+
+  if(roomId){
+    if(role === 'admin'){
+      // 管理员从列表点「进入聊天」：密码验证通过后跳转
+      sessionStorage.setItem('pendingAdminRoom', roomId);
+      // lockScreen 正常显示，解锁后自动打开聊天室
+    } else {
+      // role==='client' 或旧链接兼容，都当客户处理
+      document.getElementById('lockScreen').style.display='none';
+      document.getElementById('nav').style.display='none';
+      openClientChat(roomId);
+    }
   }
 }
 
